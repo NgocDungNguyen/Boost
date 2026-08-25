@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filter — Findter Filter & Search</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<style>
+    body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .custom-shadow { box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06); }
+    .nav-item { transition: background-color .12s ease, color .12s ease; }
+    .toggle-track { transition: background-color .15s ease; }
+    .toggle-knob { transition: transform .15s ease; }
+    .tab-btn, .product-mode-btn { transition: all .12s ease; }
+    .type-card { transition: all .12s ease; cursor: pointer; }
+    .type-card.active-boost { border-color:#2563eb; background:#eff6ff; }
+    .type-card.active-demote { border-color:#d97706; background:#fffbeb; }
+    .type-card.active-hide { border-color:#dc2626; background:#fef2f2; }
+    .chip { display:inline-flex; align-items:center; gap:6px; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:9999px; padding:3px 10px 3px 12px; font-size:11px; color:#374151; }
+    .chip button { color:#9ca3af; }
+    .chip button:hover { color:#4b5563; }
+    .applies-chip { display:inline-flex; align-items:center; background:#f3f4f6; border-radius:6px; padding:2px 8px; font-size:11px; color:#374151; }
+    .rule-row.dragging { opacity: .4; }
+    .rule-row td { vertical-align: middle; }
+    .drag-handle { cursor: grab; }
+    .condition-group-row.dragging { opacity: .4; }
+    .group-drag-handle { cursor: grab; }
+    .group-name-input.name-duplicate { border-color: #f87171; color: #b91c1c; }
+    .badge { display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:2px 9px; border-radius:9999px; }
+    .badge-boost { background:#dbeafe; color:#1d4ed8; }
+    .badge-demote { background:#fef3c7; color:#b45309; }
+    .badge-hide { background:#fee2e2; color:#b91c1c; }
+    .prod-row:hover { background:#f9fafb; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="flex min-h-screen">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="w-60 bg-white border-r border-gray-200 flex flex-col shrink-0">
+        <div class="h-14 flex items-center px-4 border-b border-gray-200">
+            <div class="w-7 h-7 rounded bg-zinc-900 text-white flex items-center justify-center text-xs font-bold mr-2">Fd</div>
+            <span class="text-sm font-semibold text-gray-800 truncate">Findter Filter & Search</span>
+            <i class="fas fa-chevron-left text-gray-300 text-xs ml-auto"></i>
+        </div>
+        <nav class="flex-1 p-3 space-y-0.5">
+            <a href="filter.html" class="nav-item flex items-center px-3 py-2 rounded-md text-sm font-semibold text-gray-900 bg-gray-100">Filter</a>
+            <a href="search.html" class="nav-item flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">Search</a>
+            <a href="merchandising.html" class="nav-item flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">Merchandising</a>
+            <a href="#" class="nav-item flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">Settings</a>
+            <a href="#" class="nav-item flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">Year Make Model</a>
+            <a href="#" class="nav-item flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">Advanced Feature</a>
+            <a href="#" class="nav-item flex items-center px-3 py-2 rounded-md text-sm text-gray-300 cursor-not-allowed">Analytics</a>
+            <a href="#" class="nav-item flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">Storefront Preview</a>
+        </nav>
+        <div class="p-3 border-t border-gray-100 text-xs text-gray-400 flex items-center cursor-pointer hover:text-gray-600">
+            View more <i class="fas fa-chevron-down text-[10px] ml-1"></i>
+        </div>
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="flex-1 overflow-y-auto">
+        <div class="max-w-6xl mx-auto p-8">
+
+            <!-- ============ LIST SCREEN ============ -->
+            <div id="main-screen">
+                <h1 class="text-2xl font-bold text-gray-900">Filter</h1>
+                <p class="text-sm text-gray-500 mt-1">Filter Guidelines <a href="#" class="text-blue-600 hover:underline">here</a>.</p>
+
+                <!-- Tabs -->
+                <div class="mt-5 flex gap-2">
+                    <button class="tab-btn px-4 py-2 rounded-md text-sm font-semibold border" data-tab="manage">Manage filter set</button>
+                    <button class="tab-btn px-4 py-2 rounded-md text-sm font-semibold border" data-tab="boost">Collection Booster</button>
+                </div>
+
+                <!-- ===== TAB: Manage Filter Set ===== -->
+                <div id="panel-manage" class="tab-panel hidden mt-6">
+                    <div class="bg-white border border-gray-200 rounded-lg custom-shadow overflow-hidden">
+                        <div class="flex items-center justify-between gap-3 p-4 border-b border-gray-200">
+                            <div class="relative w-72">
+                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                <input id="fs-search" type="text" placeholder="Find your Filter Set here" class="w-full border border-gray-300 rounded-md py-2 pl-8 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <button id="add-fs-btn" class="px-4 py-2 bg-zinc-800 text-white rounded-md text-xs font-semibold hover:bg-zinc-700 transition-colors shrink-0">
+                                <i class="fas fa-plus mr-1.5"></i>Add filter set
+                            </button>
+                        </div>
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-gray-50 text-left text-[11px] uppercase tracking-wide text-gray-500">
+                                    <th class="px-4 py-2.5 w-20">Status</th>
+                                    <th class="px-4 py-2.5">Filter set</th>
+                                    <th class="px-4 py-2.5">Applies to</th>
+                                    <th class="px-4 py-2.5 w-28 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fs-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ===== TAB: Collection Booster ===== -->
+                <div id="panel-boost" class="tab-panel hidden mt-6">
+                    <div id="booster-header" class="hidden items-center justify-between mb-3">
+                        <div>
+                            <h2 class="text-sm font-bold text-gray-800">Collection Booster</h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Boost, demote, or hide products on collection pages.</p>
+                        </div>
+                        <button id="add-rule-btn" class="px-4 py-2 bg-zinc-800 text-white rounded-md text-xs font-semibold hover:bg-zinc-700 transition-colors shrink-0">
+                            <i class="fas fa-plus mr-1.5"></i>Add Rule
+                        </button>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="rules-empty" class="hidden">
+                        <div class="flex flex-wrap items-center justify-center gap-14 py-14 px-6">
+                            <div class="max-w-sm">
+                                <h3 class="text-base font-bold text-gray-900 mb-2">Boost, demote, or hide products in this collection</h3>
+                                <p class="text-sm text-gray-500 leading-relaxed mb-5">Take full control of how products rank on the collection page. Boost best sellers to the top, demote slow movers, or hide out-of-stock items so shoppers always see the right products first.</p>
+                                <button class="add-rule-trigger px-4 py-2 bg-zinc-800 text-white rounded-md text-xs font-semibold hover:bg-zinc-700 transition-colors">
+                                    <i class="fas fa-plus mr-1.5"></i>Add Rule
+                                </button>
+                            </div>
+                            <div class="relative w-56 h-52 shrink-0">
+                                <div class="absolute right-0 top-6 w-36 h-44 bg-white rounded-xl shadow-md border border-gray-100"></div>
+                                <div class="absolute left-0 top-0 w-40 h-48 bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col items-center justify-center p-4">
+                                    <i class="fas fa-tshirt text-5xl mb-3" style="color:#f5b300"></i>
+                                    <div class="w-full h-2.5 bg-gray-100 rounded"></div>
+                                </div>
+                                <div class="absolute left-[124px] top-[-6px] w-8 h-8 bg-emerald-500 rounded-md flex items-center justify-center shadow">
+                                    <i class="fas fa-arrow-up text-white text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div id="rules-table-card" class="hidden bg-white border border-gray-200 rounded-lg custom-shadow overflow-hidden">
+                        <table id="rules-table" class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-gray-50 text-left text-[11px] uppercase tracking-wide text-gray-500">
+                                    <th class="px-3 py-2.5 w-10"></th>
+                                    <th class="px-3 py-2.5 w-16">Status</th>
+                                    <th class="px-3 py-2.5">Rule Name</th>
+                                    <th class="px-3 py-2.5 w-24">Type</th>
+                                    <th class="px-3 py-2.5">Collection</th>
+                                    <th class="px-3 py-2.5 w-28">Start Date</th>
+                                    <th class="px-3 py-2.5 w-28">End Date</th>
+                                    <th class="px-3 py-2.5 w-20 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rules-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ RULE BUILDER SCREEN ============ -->
+            <div id="builder-screen" class="hidden">
+                <div class="bg-white border border-gray-200 rounded-xl custom-shadow overflow-hidden">
+                    <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between">
+                        <button id="builder-back-btn" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2">
+                            <i class="fas fa-arrow-left"></i>Back
+                        </button>
+                        <div id="builder-title" class="text-sm font-bold tracking-wide text-gray-800">ADD A NEW RULE</div>
+                        <div class="flex items-center gap-2">
+                            <button id="builder-cancel-btn" class="px-4 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">Cancel</button>
+                            <button id="builder-save-btn" class="px-4 py-1.5 bg-zinc-800 rounded text-xs font-semibold text-white hover:bg-zinc-700">Save Rule</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-[1fr_1fr] divide-x divide-gray-200">
+                        <!-- LEFT: Rule conditions -->
+                        <div class="p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-160px)]">
+                            <!-- Type -->
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-2">Collection Booster Type <span class="text-red-500">*</span></label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" data-type="boost" class="type-card border-2 border-gray-200 rounded-lg py-3 text-center">
+                                        <i class="fas fa-arrow-up text-blue-600 block mb-1"></i>
+                                        <span class="text-xs font-semibold text-gray-700">Boost</span>
+                                    </button>
+                                    <button type="button" data-type="demote" class="type-card border-2 border-gray-200 rounded-lg py-3 text-center">
+                                        <i class="fas fa-arrow-down text-amber-600 block mb-1"></i>
+                                        <span class="text-xs font-semibold text-gray-700">Demote</span>
+                                    </button>
+                                    <button type="button" data-type="hide" class="type-card border-2 border-gray-200 rounded-lg py-3 text-center">
+                                        <i class="fas fa-eye-slash text-red-600 block mb-1"></i>
+                                        <span class="text-xs font-semibold text-gray-700">Hide</span>
+                                    </button>
+                                </div>
+                                <p id="type-desc" class="text-[11px] text-gray-400 mt-1.5"></p>
+                            </div>
+
+                            <!-- Rule name -->
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5">Rule name <span class="text-red-500">*</span></label>
+                                <input id="rule-name" type="text" maxlength="60" placeholder="e.g. Boost New Arrivals in Ring" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <p id="rule-name-error" class="hidden text-[11px] text-red-600 mt-1">This field can't be empty</p>
+                            </div>
+
+                            <!-- Active date -->
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5">Active date</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <input id="start-date" type="date" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <input id="end-date" type="date" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                </div>
+                                <p class="text-[11px] text-gray-400 mt-1.5">Leave blank to apply forever.</p>
+                            </div>
+
+                            <!-- Market -->
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5">Select market to apply</label>
+                                <div class="relative">
+                                    <select id="market-select" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm appearance-none bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                        <option>Store default</option>
+                                        <option>United States</option>
+                                        <option>European Union</option>
+                                        <option>Asia Pacific</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-xs"></i></div>
+                                </div>
+                            </div>
+
+                            <!-- Apply to -->
+                            <div class="pt-2 border-t border-gray-100">
+                                <label class="block text-xs font-semibold text-gray-700 mb-2">Apply to</label>
+                                <div class="flex items-center gap-5 mb-3">
+                                    <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                        <input type="radio" name="apply-mode" value="all" checked class="w-4 h-4 text-zinc-800 border-gray-300 focus:ring-zinc-800"><span class="ml-2">All Collections</span>
+                                    </label>
+                                    <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                        <input type="radio" name="apply-mode" value="specific" class="w-4 h-4 text-zinc-800 border-gray-300 focus:ring-zinc-800"><span class="ml-2">Specific Collection Page</span>
+                                    </label>
+                                </div>
+
+                                <div id="specific-collection-box" class="hidden space-y-2 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                    <div class="relative">
+                                        <select id="collection-select" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm appearance-none bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                            <option value="">Select collection page</option>
+                                        </select>
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-xs"></i></div>
+                                    </div>
+                                    <p id="collection-error" class="hidden text-[11px] text-red-600">Please select a collection page.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Product selection -->
+                        <div class="p-5 flex flex-col max-h-[calc(100vh-160px)]">
+                            <label class="block text-xs font-semibold text-gray-700 mb-2">Choose products to apply <span class="text-red-500">*</span></label>
+
+                            <div class="inline-flex bg-gray-100 rounded-lg p-1 gap-1 mb-3 self-start">
+                                <button type="button" data-mode="specific" class="product-mode-btn px-3.5 py-1.5 rounded-md text-xs font-semibold">Specific product items</button>
+                                <button type="button" data-mode="attributes" class="product-mode-btn px-3.5 py-1.5 rounded-md text-xs font-semibold">Attributes</button>
+                            </div>
+
+                            <p id="scope-note" class="text-[11px] text-gray-400 mb-2"></p>
+
+                            <!-- SPECIFIC PRODUCTS MODE -->
+                            <div id="specific-products-panel" class="flex-1 flex flex-col min-h-0">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[11px] text-gray-400">Select up to 6 products</span>
+                                    <span id="selected-count" class="text-[11px] text-gray-400">0/6 selected</span>
+                                </div>
+
+                                <div id="selected-chips" class="flex flex-wrap gap-1.5 mb-2 empty:hidden"></div>
+
+                                <div class="relative mb-3">
+                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                    <input id="product-search" type="text" placeholder="Search products by name..." class="w-full border border-gray-300 rounded-md py-2 pl-8 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                </div>
+
+                                <div id="product-list" class="border border-gray-200 rounded-md bg-white flex-1 overflow-y-auto divide-y divide-gray-100 shadow-inner"></div>
+                                <p id="products-error" class="hidden text-[11px] text-red-600 mt-1.5">Select at least one product.</p>
+                            </div>
+
+                            <!-- ATTRIBUTES MODE -->
+                            <div id="attributes-panel" class="hidden flex-1 flex flex-col min-h-0">
+                                <div id="condition-groups" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+                                <p id="group-names-error" class="hidden text-[11px] text-red-600 mt-1.5">Give each condition group a unique name.</p>
+                                <p id="attributes-error" class="hidden text-[11px] text-red-600 mt-1.5">Please complete all attribute conditions.</p>
+                            </div>
+
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-[11px] text-gray-500 leading-relaxed" id="preview-summary"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+// ==================== SAMPLE DATA ====================
+const COLLECTIONS = ['Rings','Necklaces','Earrings','Bracelets',"Men's Apparel","Women's Apparel",'Footwear','Electronics','Home & Living','Accessories'];
+
+const PRODUCTS = [
+    { id:1,  name:'Classic Gold Ring',            price:299.99,  color:'#eab308', collections:['Rings'],              type:'Ring',      category:'Jewelry',    vendor:'Tiffany & Co.', tags:['Best Seller','Gold'],           inventory:'In stock',     published:'2025-11-02' },
+    { id:2,  name:'Silver Band Ring',              price:89.99,   color:'#9ca3af', collections:['Rings'],              type:'Ring',      category:'Jewelry',    vendor:'Pandora',       tags:['New Arrival'],                   inventory:'In stock',     published:'2026-01-15' },
+    { id:3,  name:'Diamond Halo Ring',              price:1499.99, color:'#e5e7eb', collections:['Rings'],              type:'Ring',      category:'Jewelry',    vendor:'Cartier',       tags:['Limited Edition','Diamond'],     inventory:'Out of stock', published:'2025-08-20' },
+    { id:4,  name:'Pearl Drop Necklace',            price:129.99,  color:'#f3f4f6', collections:['Necklaces'],          type:'Necklace',  category:'Jewelry',    vendor:'Pandora',       tags:['New Arrival'],                   inventory:'In stock',     published:'2026-02-10' },
+    { id:5,  name:'Gold Chain Necklace',            price:349.99,  color:'#eab308', collections:['Necklaces'],          type:'Necklace',  category:'Jewelry',    vendor:'Tiffany & Co.', tags:['Best Seller'],                   inventory:'In stock',     published:'2025-09-05' },
+    { id:6,  name:'Layered Choker Necklace',        price:45.99,   color:'#111827', collections:['Necklaces'],          type:'Necklace',  category:'Jewelry',    vendor:'Zara',          tags:['Trendy'],                        inventory:'In stock',     published:'2026-03-01' },
+    { id:7,  name:'Diamond Stud Earrings',          price:899.99,  color:'#e5e7eb', collections:['Earrings'],           type:'Earring',   category:'Jewelry',    vendor:'Cartier',       tags:['Best Seller','Diamond'],         inventory:'In stock',     published:'2025-07-18' },
+    { id:8,  name:'Hoop Earrings Gold',             price:59.99,   color:'#eab308', collections:['Earrings'],           type:'Earring',   category:'Jewelry',    vendor:'Pandora',       tags:['New Arrival'],                   inventory:'In stock',     published:'2026-04-22' },
+    { id:9,  name:'Pearl Drop Earrings',            price:119.99,  color:'#f3f4f6', collections:['Earrings'],           type:'Earring',   category:'Jewelry',    vendor:'Tiffany & Co.', tags:['Classic'],                       inventory:'Out of stock', published:'2025-12-30' },
+    { id:10, name:'Tennis Bracelet',                price:799.99,  color:'#e5e7eb', collections:['Bracelets'],          type:'Bracelet',  category:'Jewelry',    vendor:'Cartier',       tags:['Luxury'],                        inventory:'In stock',     published:'2025-10-11' },
+    { id:11, name:'Charm Bracelet',                 price:79.99,   color:'#eab308', collections:['Bracelets'],          type:'Bracelet',  category:'Jewelry',    vendor:'Pandora',       tags:['Best Seller'],                   inventory:'In stock',     published:'2026-01-05' },
+    { id:12, name:'Leather Wrap Bracelet',          price:24.99,   color:'#78350f', collections:['Bracelets','Accessories'], type:'Bracelet', category:'Accessories', vendor:'Zara',       tags:['Casual'],                        inventory:'In stock',     published:'2025-06-25' },
+    { id:13, name:"Men's Oxford Shirt",             price:49.99,   color:'#3b82f6', collections:["Men's Apparel"],      type:'Shirt',     category:'Apparel',    vendor:'Zara',          tags:['New Arrival'],                   inventory:'In stock',     published:'2026-02-14' },
+    { id:14, name:"Men's Denim Jacket",             price:89.99,   color:'#1e3a8a', collections:["Men's Apparel"],      type:'Jacket',    category:'Apparel',    vendor:"Levi's",        tags:['Best Seller'],                   inventory:'In stock',     published:'2025-11-19' },
+    { id:15, name:"Men's Chino Pants",              price:59.99,   color:'#a16207', collections:["Men's Apparel"],      type:'Pants',     category:'Apparel',    vendor:'Zara',          tags:['Casual'],                        inventory:'In stock',     published:'2026-05-03' },
+    { id:16, name:"Men's Wool Sweater",             price:69.99,   color:'#6b7280', collections:["Men's Apparel"],      type:'Sweater',   category:'Apparel',    vendor:'Uniqlo',        tags:['Winter'],                        inventory:'Out of stock', published:'2025-09-28' },
+    { id:17, name:"Women's Silk Blouse",            price:54.99,   color:'#ec4899', collections:["Women's Apparel"],    type:'Blouse',    category:'Apparel',    vendor:'Zara',          tags:['New Arrival'],                   inventory:'In stock',     published:'2026-03-17' },
+    { id:18, name:"Women's Midi Dress",             price:79.99,   color:'#be185d', collections:["Women's Apparel"],    type:'Dress',     category:'Apparel',    vendor:'Zara',          tags:['Best Seller'],                   inventory:'In stock',     published:'2025-08-08' },
+    { id:19, name:"Women's Cashmere Cardigan",      price:129.99,  color:'#f472b6', collections:["Women's Apparel"],    type:'Cardigan',  category:'Apparel',    vendor:'Uniqlo',        tags:['Winter','Luxury'],               inventory:'In stock',     published:'2026-06-01' },
+    { id:20, name:"Women's Denim Jeans",            price:69.99,   color:'#1d4ed8', collections:["Women's Apparel"],    type:'Jeans',     category:'Apparel',    vendor:"Levi's",        tags:['Casual'],                        inventory:'In stock',     published:'2025-12-12' },
+    { id:21, name:'Running Shoes Pro',              price:129.99,  color:'#ef4444', collections:['Footwear'],           type:'Sneakers',  category:'Footwear',   vendor:'Nike',          tags:['Best Seller'],                   inventory:'In stock',     published:'2026-01-25' },
+    { id:22, name:'Classic Leather Boots',          price:159.99,  color:'#78350f', collections:['Footwear'],           type:'Boots',     category:'Footwear',   vendor:'Timberland',    tags:['Winter'],                        inventory:'In stock',     published:'2025-10-30' },
+    { id:23, name:'Casual Canvas Sneakers',         price:64.99,   color:'#111827', collections:['Footwear'],           type:'Sneakers',  category:'Footwear',   vendor:'Converse',      tags:['Casual'],                        inventory:'In stock',     published:'2026-04-09' },
+    { id:24, name:'Trail Running Shoes',            price:139.99,  color:'#f97316', collections:['Footwear'],           type:'Sneakers',  category:'Footwear',   vendor:'Nike',          tags:['New Arrival'],                   inventory:'Out of stock', published:'2025-07-07' },
+    { id:25, name:'Wireless Earbuds Pro',           price:179.99,  color:'#111827', collections:['Electronics'],        type:'Audio',     category:'Electronics',vendor:'Sony',          tags:['Best Seller'],                   inventory:'In stock',     published:'2026-02-28' },
+    { id:26, name:'Smart Watch Series 5',           price:399.99,  color:'#1f2937', collections:['Electronics'],        type:'Wearable',  category:'Electronics',vendor:'Apple',         tags:['New Arrival'],                   inventory:'In stock',     published:'2025-11-11' },
+    { id:27, name:'Bluetooth Speaker Mini',         price:44.99,   color:'#0891b2', collections:['Electronics'],        type:'Audio',     category:'Electronics',vendor:'Sony',          tags:['Casual'],                        inventory:'In stock',     published:'2026-05-20' },
+    { id:28, name:'Noise Cancelling Headphones',    price:249.99,  color:'#374151', collections:['Electronics'],        type:'Audio',     category:'Electronics',vendor:'Sony',          tags:['Best Seller','Premium'],         inventory:'Out of stock', published:'2025-09-14' },
+    { id:29, name:'Ceramic Coffee Mug Set',         price:24.99,   color:'#f59e0b', collections:['Home & Living'],      type:'Kitchenware', category:'Home Goods', vendor:'IKEA',        tags:['Everyday'],                      inventory:'In stock',     published:'2026-03-30' },
+    { id:30, name:'Scented Candle Deluxe',          price:19.99,   color:'#d97706', collections:['Home & Living'],      type:'Decor',     category:'Home Goods', vendor:'IKEA',          tags:['Gift'],                           inventory:'In stock',     published:'2025-08-01' },
+    { id:31, name:'Cotton Throw Blanket',           price:39.99,   color:'#8b5cf6', collections:['Home & Living'],      type:'Textile',   category:'Home Goods', vendor:'IKEA',          tags:['Winter','Cozy'],                 inventory:'In stock',     published:'2026-06-15' },
+    { id:32, name:'Ceramic Vase Set',               price:34.99,   color:'#14b8a6', collections:['Home & Living'],      type:'Decor',     category:'Home Goods', vendor:'IKEA',          tags:['Gift'],                           inventory:'Out of stock', published:'2025-12-05' },
+    { id:33, name:'Leather Wallet',                 price:49.99,   color:'#78350f', collections:['Accessories'],        type:'Wallet',    category:'Accessories',vendor:'Fossil',        tags:['Classic'],                       inventory:'In stock',     published:'2026-01-10' },
+    { id:34, name:'Aviator Sunglasses',             price:129.99,  color:'#374151', collections:['Accessories'],        type:'Sunglasses',category:'Accessories',vendor:'Ray-Ban',       tags:['Trendy'],                        inventory:'In stock',     published:'2025-10-22' },
+    { id:35, name:'Silk Scarf',                     price:34.99,   color:'#be185d', collections:['Accessories'],        type:'Scarf',     category:'Accessories',vendor:'Zara',          tags:['Gift'],                           inventory:'In stock',     published:'2026-04-01' },
+    { id:36, name:'Leather Belt',                   price:39.99,   color:'#4b5563', collections:['Accessories'],        type:'Belt',      category:'Accessories',vendor:'Fossil',        tags:['Classic'],                       inventory:'In stock',     published:'2025-07-29' }
+];
+
+const TODAY = new Date('2026-08-25T00:00:00');
+
+// ---- Persistence (shared with Merchandising hub) ----
+const RULES_STORAGE_KEY = 'findter_collection_rules';
+function loadRules(key, seed) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    try { localStorage.setItem(key, JSON.stringify(seed)); } catch (e) {}
+    return seed;
+}
+function saveRules(key, list) {
+    try { localStorage.setItem(key, JSON.stringify(list)); } catch (e) {}
+}
+
+// ---- Attribute condition config (dynamic, scoped by collection) ----
+function uniqueValues(list, field) {
+    const set = new Set();
+    list.forEach(p => {
+        const v = p[field];
+        if (Array.isArray(v)) v.forEach(x => set.add(x)); else if (v) set.add(v);
+    });
+    return [...set].sort();
+}
+const METAFIELDS = ['Material: Cotton','Material: Leather','Warranty: 1 Year','Warranty: 2 Years'];
+const MAX_PRODUCTS = 6;
+const MAX_CONDITIONS_PER_GROUP = 3;
+
+function getScopedProducts() {
+    const modeEl = document.querySelector('input[name="apply-mode"]:checked');
+    const mode = modeEl ? modeEl.value : 'all';
+    if (mode === 'specific') {
+        const col = document.getElementById('collection-select').value;
+        if (!col) return [];
+        return PRODUCTS.filter(p => p.collections.includes(col));
+    }
+    return PRODUCTS;
+}
+
+function getAttrConfig(scopedProducts) {
+    return {
+        'Product title':    { operators:['is'] },
+        'Product Type':     { operators:['is'], options: uniqueValues(scopedProducts, 'type') },
+        'Product Category': { operators:['is'], options: uniqueValues(scopedProducts, 'category') },
+        'Vendor':            { operators:['is'], options: uniqueValues(scopedProducts, 'vendor') },
+        'Product Tag':       { operators:['is'], options: uniqueValues(scopedProducts, 'tags') },
+        'Metafield':         { operators:['is'], options: METAFIELDS },
+        'Inventory':         { operators:['is','<=','=','>='] },
+        'Price':             { operators:['=','<=','>='] },
+        'Date published':    { operators:['Before','After'] }
+    };
+}
+
+let condIdSeq = 1;
+function newCondition() {
+    return { id: condIdSeq++, attr:'Product title', operator:'is', value:'' };
+}
+function newGroup(existingGroups) {
+    const list = existingGroups || [];
+    const existingNames = new Set(list.map(g => g.name.trim().toLowerCase()));
+    let n = list.length + 1;
+    while (existingNames.has(`condition group ${n}`.toLowerCase())) n++;
+    return { id: condIdSeq++, name: `Condition Group ${n}`, conditions: [newCondition()] };
+}
+function escapeAttr(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
+// ---- Filter sets (Manage filter set tab) ----
+let filterSets = [
+    { id:1, name:'Default Filter Set', applies:['All Collections','Search Result Page'], enabled:true },
+    { id:2, name:'Rings', applies:['18K','14K','Platinum','+3 more'], enabled:true },
+    { id:3, name:'Necklaces', applies:['Rings','Earrings','Home page','+2 more'], enabled:true }
+];
+let nextFsId = 4;
+
+// ---- Collection Booster rules ----
+let rules = loadRules(RULES_STORAGE_KEY, [
+    { id:1, type:'boost', name:'Boost Best Sellers in Rings', start:'', end:'', market:'Store default', applyMode:'specific', collection:'Rings', productMode:'specific', productIds:[1,2], groups:[], groupRelation:'AND', enabled:true, _expiredApplied:false },
+    { id:2, type:'hide', name:'Hide Out of Stock Storewide', start:'', end:'', market:'Store default', applyMode:'all', collection:'', productMode:'attributes', productIds:[], groups:[{ id:9001, name:'Condition Group 1', conditions:[{ id:9002, attr:'Inventory', operator:'is', value:'Out of stock' }] }], groupRelation:'AND', enabled:true, _expiredApplied:false },
+    { id:3, type:'demote', name:'Demote Slow Movers in Necklaces', start:'2026-01-01', end:'2026-02-01', market:'Store default', applyMode:'specific', collection:'Necklaces', productMode:'specific', productIds:[6], groups:[], groupRelation:'AND', enabled:true, _expiredApplied:false }
+]);
+let nextId = Math.max(0, ...rules.map(r => r.id)) + 1;
+let editingId = null;
+
+const TYPE_META = {
+    boost:  { label:'Boost',  badge:'badge-boost',  desc:'Selected products will be pinned higher on the collection page.' },
+    demote: { label:'Demote', badge:'badge-demote', desc:'Selected products will rank lower on the collection page.' },
+    hide:   { label:'Hide',   badge:'badge-hide',   desc:'Selected products will be hidden from the collection page.' }
+};
+
+let builderState = { type:'boost', collection:'', selectedProducts:new Set(), productQuery:'', productMode:'specific', groups:[newGroup()], groupRelation:'AND' };
+
+const mainScreen = document.getElementById('main-screen');
+const builderScreen = document.getElementById('builder-screen');
+
+// populate collection dropdown
+(function initCollectionOptions() {
+    const sel = document.getElementById('collection-select');
+    COLLECTIONS.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        sel.appendChild(opt);
+    });
+})();
+
+// ==================== TABS ====================
+const tabBtns = document.querySelectorAll('.tab-btn');
+function setTab(tab) {
+    tabBtns.forEach(b => {
+        const active = b.dataset.tab === tab;
+        b.classList.toggle('bg-zinc-800', active);
+        b.classList.toggle('text-white', active);
+        b.classList.toggle('border-zinc-800', active);
+        b.classList.toggle('bg-white', !active);
+        b.classList.toggle('text-gray-700', !active);
+        b.classList.toggle('border-gray-300', !active);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.getElementById('panel-' + tab).classList.remove('hidden');
+    localStorage.setItem('filter-active-tab', tab);
+}
+tabBtns.forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+setTab(localStorage.getItem('filter-active-tab') || 'manage');
+
+// ==================== MANAGE FILTER SET TABLE ====================
+const fsTbody = document.getElementById('fs-tbody');
+function renderFsTable() {
+    const q = document.getElementById('fs-search').value.trim().toLowerCase();
+    const rows = filterSets.filter(f => f.name.toLowerCase().includes(q));
+    fsTbody.innerHTML = rows.map(f => `
+        <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+            <td class="px-4 py-3">
+                <button data-id="${f.id}" class="fs-toggle-btn relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none toggle-track ${f.enabled ? 'bg-emerald-500' : 'bg-gray-200'}">
+                    <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 toggle-knob ${f.enabled ? 'translate-x-4' : 'translate-x-0'}"></span>
+                </button>
+            </td>
+            <td class="px-4 py-3 text-sm font-medium text-gray-800">${f.name}</td>
+            <td class="px-4 py-3">
+                <div class="flex flex-wrap gap-1.5">
+                    ${f.applies.map(a => `<span class="applies-chip">${a}</span>`).join('')}
+                </div>
+            </td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+                <button data-id="${f.id}" class="fs-edit-btn text-gray-400 hover:text-gray-700 mr-2.5"><i class="fas fa-pen text-xs"></i></button>
+                <button data-id="${f.id}" class="fs-copy-btn text-gray-400 hover:text-gray-700 mr-2.5"><i class="fas fa-copy text-xs"></i></button>
+                <button data-id="${f.id}" class="fs-delete-btn text-gray-400 hover:text-red-600"><i class="fas fa-trash-alt text-xs"></i></button>
+            </td>
+        </tr>
+    `).join('') || `<tr><td colspan="4" class="text-center text-xs text-gray-400 py-10">No filter sets found.</td></tr>`;
+
+    fsTbody.querySelectorAll('.fs-toggle-btn').forEach(btn => btn.addEventListener('click', () => {
+        const f = filterSets.find(x => x.id == btn.dataset.id);
+        f.enabled = !f.enabled;
+        renderFsTable();
+    }));
+    fsTbody.querySelectorAll('.fs-edit-btn').forEach(btn => btn.addEventListener('click', () => {
+        const f = filterSets.find(x => x.id == btn.dataset.id);
+        const newName = prompt('Rename filter set:', f.name);
+        if (newName && newName.trim()) { f.name = newName.trim(); renderFsTable(); }
+    }));
+    fsTbody.querySelectorAll('.fs-copy-btn').forEach(btn => btn.addEventListener('click', () => {
+        const f = filterSets.find(x => x.id == btn.dataset.id);
+        filterSets.push({ id: nextFsId++, name: f.name + ' Copy', applies: [...f.applies], enabled: false });
+        renderFsTable();
+    }));
+    fsTbody.querySelectorAll('.fs-delete-btn').forEach(btn => btn.addEventListener('click', () => {
+        if (confirm('Delete this filter set?')) {
+            filterSets = filterSets.filter(x => x.id != btn.dataset.id);
+            renderFsTable();
+        }
+    }));
+}
+document.getElementById('fs-search').addEventListener('input', renderFsTable);
+document.getElementById('add-fs-btn').addEventListener('click', () => {
+    const name = prompt('New filter set name:');
+    if (name && name.trim()) {
+        filterSets.push({ id: nextFsId++, name: name.trim(), applies: ['All Collections'], enabled: true });
+        renderFsTable();
+    }
+});
+renderFsTable();
+
+// ==================== HELPERS ====================
+function fmtDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+function isExpired(r) { return r.end && new Date(r.end + 'T00:00:00') < TODAY; }
+function checkExpiry(r) {
+    if (!r._expiredApplied && isExpired(r)) { r.enabled = false; r._expiredApplied = true; }
+}
+
+// ==================== RULES TABLE (Collection Booster) ====================
+const rulesTbody = document.getElementById('rules-tbody');
+const rulesEmpty = document.getElementById('rules-empty');
+const rulesTable = document.getElementById('rules-table-card');
+const boosterHeader = document.getElementById('booster-header');
+
+function renderRulesTable() {
+    rules.forEach(checkExpiry);
+    saveRules(RULES_STORAGE_KEY, rules);
+
+    if (rules.length === 0) {
+        boosterHeader.classList.add('hidden'); boosterHeader.classList.remove('flex');
+        rulesEmpty.classList.remove('hidden');
+        rulesTable.classList.add('hidden');
+        return;
+    }
+    boosterHeader.classList.remove('hidden'); boosterHeader.classList.add('flex');
+    rulesEmpty.classList.add('hidden');
+    rulesTable.classList.remove('hidden');
+
+    rulesTbody.innerHTML = rules.map((r, idx) => {
+        const meta = TYPE_META[r.type];
+        const expired = isExpired(r);
+        return `
+        <tr draggable="true" data-id="${r.id}" class="rule-row border-b border-gray-100 last:border-0 hover:bg-gray-50">
+            <td class="px-3 py-3 text-gray-300 drag-handle"><i class="fas fa-grip-vertical"></i></td>
+            <td class="px-3 py-3">
+                <button data-id="${r.id}" class="toggle-btn relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none toggle-track ${r.enabled ? 'bg-emerald-500' : 'bg-gray-200'}">
+                    <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 toggle-knob ${r.enabled ? 'translate-x-4' : 'translate-x-0'}"></span>
+                </button>
+            </td>
+            <td class="px-3 py-3 text-sm font-medium text-gray-800">${r.name}</td>
+            <td class="px-3 py-3"><span class="badge ${meta.badge}">${meta.label}</span></td>
+            <td class="px-3 py-3 text-xs text-gray-600">${r.applyMode === 'all' ? 'All Collections' : r.collection}</td>
+            <td class="px-3 py-3 text-xs text-gray-600">${fmtDate(r.start)}</td>
+            <td class="px-3 py-3 text-xs text-gray-600">${fmtDate(r.end)}${expired ? ' <span class="text-red-500 font-medium">(Expired)</span>' : ''}</td>
+            <td class="px-3 py-3 text-right whitespace-nowrap">
+                <button data-id="${r.id}" class="edit-btn text-gray-400 hover:text-gray-700 mr-3"><i class="fas fa-pen text-xs"></i></button>
+                <button data-id="${r.id}" class="delete-btn text-gray-400 hover:text-red-600"><i class="fas fa-trash-alt text-xs"></i></button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    rulesTbody.querySelectorAll('.toggle-btn').forEach(btn => btn.addEventListener('click', () => {
+        const r = rules.find(x => x.id == btn.dataset.id);
+        r.enabled = !r.enabled;
+        if (r.enabled) r._expiredApplied = false;
+        renderRulesTable();
+    }));
+    rulesTbody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openBuilder(btn.dataset.id)));
+    rulesTbody.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => {
+        if (confirm('Delete this rule?')) { rules = rules.filter(x => x.id != btn.dataset.id); renderRulesTable(); }
+    }));
+
+    bindDragReorder();
+}
+
+function bindDragReorder() {
+    let dragEl = null;
+    rulesTbody.querySelectorAll('.rule-row').forEach(row => {
+        row.addEventListener('dragstart', () => { dragEl = row; row.classList.add('dragging'); });
+        row.addEventListener('dragend', () => { row.classList.remove('dragging'); });
+        row.addEventListener('dragover', e => {
+            e.preventDefault();
+            if (!dragEl || dragEl === row) return;
+            const rect = row.getBoundingClientRect();
+            const after = (e.clientY - rect.top) > rect.height / 2;
+            row.parentNode.insertBefore(dragEl, after ? row.nextSibling : row);
+        });
+        row.addEventListener('drop', () => {
+            const newOrderIds = [...rulesTbody.querySelectorAll('.rule-row')].map(r => r.dataset.id);
+            rules.sort((a, b) => newOrderIds.indexOf(String(a.id)) - newOrderIds.indexOf(String(b.id)));
+            renderRulesTable();
+        });
+    });
+}
+
+// ==================== BUILDER: OPEN / CLOSE ====================
+document.getElementById('add-rule-btn').addEventListener('click', () => openBuilder(null));
+document.querySelectorAll('.add-rule-trigger').forEach(b => b.addEventListener('click', () => openBuilder(null)));
+document.getElementById('builder-back-btn').addEventListener('click', closeBuilder);
+document.getElementById('builder-cancel-btn').addEventListener('click', closeBuilder);
+
+function openBuilder(id) {
+    editingId = id;
+    const existing = id ? rules.find(r => r.id == id) : null;
+
+    builderState = {
+        type: existing ? existing.type : 'boost',
+        collection: existing ? existing.collection : '',
+        selectedProducts: new Set(existing && existing.productMode !== 'attributes' ? existing.productIds : []),
+        productQuery: '',
+        productMode: existing ? (existing.productMode || 'specific') : 'specific',
+        groups: existing && existing.groups && existing.groups.length ? JSON.parse(JSON.stringify(existing.groups)) : [newGroup()],
+        groupRelation: existing ? (existing.groupRelation || 'AND') : 'AND'
+    };
+
+    document.getElementById('builder-title').textContent = existing ? 'EDIT RULE' : 'ADD A NEW RULE';
+    document.getElementById('rule-name').value = existing ? existing.name : '';
+    document.getElementById('start-date').value = existing ? existing.start : '';
+    document.getElementById('end-date').value = existing ? existing.end : '';
+    document.getElementById('market-select').value = existing ? existing.market : 'Store default';
+    document.querySelectorAll('input[name="apply-mode"]').forEach(r => r.checked = (r.value === (existing ? existing.applyMode : 'all')));
+    document.getElementById('collection-select').value = existing ? existing.collection : '';
+    document.getElementById('product-search').value = '';
+    document.getElementById('rule-name-error').classList.add('hidden');
+    document.getElementById('collection-error').classList.add('hidden');
+    document.getElementById('products-error').classList.add('hidden');
+    document.getElementById('attributes-error').classList.add('hidden');
+    document.getElementById('group-names-error').classList.add('hidden');
+
+    updateApplyModeVisibility();
+    renderTypeCards();
+    setProductMode(builderState.productMode);
+    renderProductList();
+    renderSelectedChips();
+    renderConditionGroups();
+    updatePreviewSummary();
+
+    mainScreen.classList.add('hidden');
+    builderScreen.classList.remove('hidden');
+}
+
+function closeBuilder() {
+    builderScreen.classList.add('hidden');
+    mainScreen.classList.remove('hidden');
+}
+
+// ==================== TYPE CARDS ====================
+function renderTypeCards() {
+    document.querySelectorAll('.type-card').forEach(card => {
+        const active = card.dataset.type === builderState.type;
+        card.classList.remove('active-boost', 'active-demote', 'active-hide');
+        if (active) card.classList.add('active-' + card.dataset.type);
+    });
+    document.getElementById('type-desc').textContent = TYPE_META[builderState.type].desc;
+    updatePreviewSummary();
+}
+document.querySelectorAll('.type-card').forEach(card => card.addEventListener('click', () => {
+    builderState.type = card.dataset.type;
+    renderTypeCards();
+}));
+
+// ==================== APPLY TO / COLLECTION SCOPE ====================
+function updateApplyModeVisibility() {
+    const mode = document.querySelector('input[name="apply-mode"]:checked').value;
+    document.getElementById('specific-collection-box').classList.toggle('hidden', mode !== 'specific');
+    onScopeChange();
+}
+document.querySelectorAll('input[name="apply-mode"]').forEach(r => r.addEventListener('change', updateApplyModeVisibility));
+document.getElementById('collection-select').addEventListener('change', e => {
+    builderState.collection = e.target.value;
+    onScopeChange();
+});
+
+function onScopeChange() {
+    const mode = document.querySelector('input[name="apply-mode"]:checked').value;
+    const scoped = getScopedProducts();
+    const scopedIds = new Set(scoped.map(p => p.id));
+
+    // prune product selections that fell outside the new scope
+    [...builderState.selectedProducts].forEach(id => { if (!scopedIds.has(id)) builderState.selectedProducts.delete(id); });
+
+    // prune attribute values that reference options no longer in scope
+    const cfg = getAttrConfig(scoped);
+    builderState.groups.forEach(g => g.conditions.forEach(c => {
+        const conf = cfg[c.attr];
+        if (conf.options && c.value && !conf.options.includes(c.value)) c.value = '';
+    }));
+
+    const note = document.getElementById('scope-note');
+    if (mode === 'specific' && !builderState.collection) {
+        note.textContent = 'Select a collection page above to choose from its products.';
+    } else if (mode === 'specific') {
+        note.textContent = `Showing products from "${builderState.collection}" only.`;
+    } else {
+        note.textContent = 'Showing all products in your store.';
+    }
+
+    renderProductList();
+    renderSelectedChips();
+    renderConditionGroups();
+    updatePreviewSummary();
+}
+
+// ==================== PRODUCT MODE (Specific items vs Attributes) ====================
+function setProductMode(mode) {
+    builderState.productMode = mode;
+    document.querySelectorAll('.product-mode-btn').forEach(b => {
+        const active = b.dataset.mode === mode;
+        b.classList.toggle('bg-white', active);
+        b.classList.toggle('shadow-sm', active);
+        b.classList.toggle('text-gray-900', active);
+        b.classList.toggle('text-gray-500', !active);
+    });
+    document.getElementById('specific-products-panel').classList.toggle('hidden', mode !== 'specific');
+    document.getElementById('attributes-panel').classList.toggle('hidden', mode !== 'attributes');
+    updatePreviewSummary();
+}
+document.querySelectorAll('.product-mode-btn').forEach(b => b.addEventListener('click', () => setProductMode(b.dataset.mode)));
+
+// ==================== PRODUCT PICKER (Specific items) ====================
+document.getElementById('product-search').addEventListener('input', e => {
+    builderState.productQuery = e.target.value;
+    renderProductList();
+});
+
+function renderProductList() {
+    const q = builderState.productQuery.toLowerCase();
+    const list = document.getElementById('product-list');
+    const scoped = getScopedProducts();
+    const filtered = scoped.filter(p => p.name.toLowerCase().includes(q));
+    const atMax = builderState.selectedProducts.size >= MAX_PRODUCTS;
+
+    if (scoped.length === 0) {
+        list.innerHTML = `<div class="text-center text-xs text-gray-400 py-8">Select a collection page to see its products.</div>`;
+        return;
+    }
+    if (filtered.length === 0) {
+        list.innerHTML = `<div class="text-center text-xs text-gray-400 py-8">No products match "${builderState.productQuery}"</div>`;
+        return;
+    }
+    list.innerHTML = filtered.map(p => {
+        const checked = builderState.selectedProducts.has(p.id);
+        const disabled = atMax && !checked;
+        return `
+        <label class="prod-row flex items-center gap-3 px-3 py-2.5 ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}">
+            <input type="checkbox" data-id="${p.id}" class="prod-checkbox w-3.5 h-3.5 border-gray-300 rounded text-zinc-800 focus:ring-zinc-800" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+            <span class="w-8 h-8 rounded shrink-0" style="background:${p.color}"></span>
+            <span class="flex-1 text-xs text-gray-700">${p.name}</span>
+            <span class="text-xs text-gray-400">$${p.price.toFixed(2)}</span>
+        </label>`;
+    }).join('');
+    list.querySelectorAll('.prod-checkbox').forEach(cb => cb.addEventListener('change', () => {
+        const id = Number(cb.dataset.id);
+        if (cb.checked) {
+            if (builderState.selectedProducts.size >= MAX_PRODUCTS) { cb.checked = false; return; }
+            builderState.selectedProducts.add(id);
+        } else {
+            builderState.selectedProducts.delete(id);
+        }
+        renderSelectedChips();
+        renderProductList();
+        updatePreviewSummary();
+    }));
+}
+
+function renderSelectedChips() {
+    const wrap = document.getElementById('selected-chips');
+    const ids = [...builderState.selectedProducts];
+    document.getElementById('selected-count').textContent = ids.length + '/' + MAX_PRODUCTS + ' selected';
+    wrap.innerHTML = ids.map(id => {
+        const p = PRODUCTS.find(x => x.id === id);
+        return `<span class="chip">${p.name}<button data-id="${id}" class="remove-prod-btn"><i class="fas fa-times text-[9px]"></i></button></span>`;
+    }).join('');
+    wrap.querySelectorAll('.remove-prod-btn').forEach(btn => btn.addEventListener('click', () => {
+        builderState.selectedProducts.delete(Number(btn.dataset.id));
+        renderSelectedChips();
+        renderProductList();
+        updatePreviewSummary();
+    }));
+}
+
+// ==================== ATTRIBUTE CONDITION GROUPS ====================
+function renderConditionValueControl(groupId, cond) {
+    const cfg = getAttrConfig(getScopedProducts())[cond.attr];
+    let operatorHtml = '';
+    if (cfg.operators.length > 1) {
+        operatorHtml = `<div class="relative shrink-0">
+            <select class="cond-operator border border-gray-300 rounded-md pl-2 pr-6 py-1.5 text-xs appearance-none bg-white" data-group="${groupId}" data-cond="${cond.id}">
+                ${cfg.operators.map(op => `<option value="${op}" ${op === cond.operator ? 'selected' : ''}>${op}</option>`).join('')}
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-[9px]"></i></div>
+        </div>`;
+    } else {
+        operatorHtml = `<span class="text-[11px] text-gray-400 shrink-0 px-1">${cfg.operators[0]}</span>`;
+    }
+
+    let valueHtml = '';
+    if (cond.attr === 'Inventory') {
+        if (cond.operator === 'is') {
+            valueHtml = `<select class="cond-value border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white flex-1 min-w-0" data-group="${groupId}" data-cond="${cond.id}">
+                <option value="">Select value</option>
+                <option value="In stock" ${cond.value === 'In stock' ? 'selected' : ''}>In stock</option>
+                <option value="Out of stock" ${cond.value === 'Out of stock' ? 'selected' : ''}>Out of stock</option>
+            </select>`;
+        } else {
+            valueHtml = `<input type="number" class="cond-value border border-gray-300 rounded-md px-2 py-1.5 text-xs flex-1 min-w-0" placeholder="Quantity" value="${cond.value || ''}" data-group="${groupId}" data-cond="${cond.id}">`;
+        }
+    } else if (cond.attr === 'Price') {
+        valueHtml = `<div class="relative flex-1 min-w-0">
+            <span class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">$</span>
+            <input type="number" step="0.01" class="cond-value border border-gray-300 rounded-md pl-5 pr-2 py-1.5 text-xs w-full" placeholder="0.00" value="${cond.value || ''}" data-group="${groupId}" data-cond="${cond.id}">
+        </div>`;
+    } else if (cond.attr === 'Date published') {
+        valueHtml = `<input type="date" class="cond-value border border-gray-300 rounded-md px-2 py-1.5 text-xs flex-1 min-w-0" value="${cond.value || ''}" data-group="${groupId}" data-cond="${cond.id}">`;
+    } else if (cfg.options) {
+        valueHtml = `<select class="cond-value border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white flex-1 min-w-0" data-group="${groupId}" data-cond="${cond.id}">
+            <option value="">Select value</option>
+            ${cfg.options.map(o => `<option value="${o}" ${cond.value === o ? 'selected' : ''}>${o}</option>`).join('')}
+        </select>`;
+    } else {
+        valueHtml = `<input type="text" class="cond-value border border-gray-300 rounded-md px-2 py-1.5 text-xs flex-1 min-w-0" placeholder="Enter product title" value="${cond.value || ''}" data-group="${groupId}" data-cond="${cond.id}">`;
+    }
+
+    return operatorHtml + valueHtml;
+}
+
+function renderConditionRow(groupId, cond, condCount) {
+    const attrKeys = Object.keys(getAttrConfig(getScopedProducts()));
+    return `
+    <div class="flex items-center gap-2">
+        <select class="attr-select border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white w-36 shrink-0" data-group="${groupId}" data-cond="${cond.id}">
+            ${attrKeys.map(a => `<option value="${a}" ${cond.attr === a ? 'selected' : ''}>${a}</option>`).join('')}
+        </select>
+        ${renderConditionValueControl(groupId, cond)}
+        <button class="remove-cond-btn text-gray-400 hover:text-red-600 shrink-0 ${condCount <= 1 ? 'invisible' : ''}" data-group="${groupId}" data-cond="${cond.id}"><i class="fas fa-times text-xs"></i></button>
+    </div>`;
+}
+
+function renderConditionGroups() {
+    const wrap = document.getElementById('condition-groups');
+    let html = '';
+
+    if (builderState.groups.length > 1) {
+        html += `
+        <div class="flex items-center gap-4 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
+            <span class="font-medium text-gray-700">Match groups using</span>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="group-relation" value="AND" ${builderState.groupRelation === 'AND' ? 'checked' : ''} class="w-3.5 h-3.5 text-zinc-800 focus:ring-zinc-800"><span class="ml-1">AND</span></label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="group-relation" value="OR" ${builderState.groupRelation === 'OR' ? 'checked' : ''} class="w-3.5 h-3.5 text-zinc-800 focus:ring-zinc-800"><span class="ml-1">OR</span></label>
+        </div>
+        <p class="text-[11px] text-gray-400"><i class="fas fa-sort mr-1"></i>Drag groups to reorder — products matching a higher group are prioritized first.</p>`;
+    }
+
+    html += builderState.groups.map((g, gi) => `
+        <div class="condition-group-row border border-gray-200 rounded-lg p-3 space-y-2 bg-white" draggable="true" data-group-id="${g.id}">
+            <div class="flex items-center gap-2">
+                <span class="group-drag-handle text-gray-300 shrink-0"><i class="fas fa-grip-vertical text-xs"></i></span>
+                <span class="w-5 h-5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold flex items-center justify-center shrink-0">${gi + 1}</span>
+                <input type="text" class="group-name-input flex-1 min-w-0 text-xs font-semibold text-gray-700 bg-transparent border-b border-dashed border-gray-300 focus:border-gray-500 outline-none px-0.5 py-0.5" data-group="${g.id}" value="${escapeAttr(g.name)}" maxlength="40" placeholder="Group name">
+                ${builderState.groups.length > 1 ? `<button class="remove-group-btn text-gray-400 hover:text-red-600 shrink-0" data-group="${g.id}"><i class="fas fa-trash-alt text-xs"></i></button>` : ''}
+            </div>
+            <p class="group-name-error hidden text-[10px] text-red-600 pl-7" data-group="${g.id}">This name is already used by another group.</p>
+            <div class="space-y-2 pl-7">
+                ${g.conditions.map(c => renderConditionRow(g.id, c, g.conditions.length)).join('')}
+            </div>
+            ${g.conditions.length < MAX_CONDITIONS_PER_GROUP ? `<button class="add-cond-btn text-xs text-blue-600 font-medium hover:underline pl-7" data-group="${g.id}"><i class="fas fa-plus mr-1"></i>And attribute</button>` : ''}
+        </div>
+    `).join('');
+
+    html += `<button id="add-group-btn" type="button" class="text-xs text-blue-600 font-medium hover:underline block"><i class="fas fa-plus mr-1"></i>Add new group</button>`;
+
+    wrap.innerHTML = html;
+    bindConditionEvents();
+    bindGroupDragReorder();
+}
+
+function checkGroupNameDuplicate(groupId) {
+    const g = builderState.groups.find(x => x.id == groupId);
+    if (!g) return false;
+    const name = g.name.trim().toLowerCase();
+    if (!name) return true;
+    return builderState.groups.some(o => o.id !== g.id && o.name.trim().toLowerCase() === name);
+}
+
+function refreshGroupNameValidation() {
+    const wrap = document.getElementById('condition-groups');
+    builderState.groups.forEach(g => {
+        const dup = checkGroupNameDuplicate(g.id);
+        const inp = wrap.querySelector(`.group-name-input[data-group="${g.id}"]`);
+        const err = wrap.querySelector(`.group-name-error[data-group="${g.id}"]`);
+        if (inp) inp.classList.toggle('name-duplicate', dup);
+        if (err) err.classList.toggle('hidden', !dup);
+    });
+}
+
+function groupNamesAreValid() {
+    const names = builderState.groups.map(g => g.name.trim().toLowerCase());
+    if (names.some(n => !n)) return false;
+    return new Set(names).size === names.length;
+}
+
+function bindGroupDragReorder() {
+    const wrap = document.getElementById('condition-groups');
+    let dragEl = null;
+    wrap.querySelectorAll('.condition-group-row').forEach(row => {
+        row.addEventListener('dragstart', e => {
+            if (e.target.closest('input, select, textarea, button')) { e.preventDefault(); return; }
+            dragEl = row;
+            row.classList.add('dragging');
+        });
+        row.addEventListener('dragend', () => { row.classList.remove('dragging'); });
+        row.addEventListener('dragover', e => {
+            e.preventDefault();
+            if (!dragEl || dragEl === row) return;
+            const rect = row.getBoundingClientRect();
+            const after = (e.clientY - rect.top) > rect.height / 2;
+            row.parentNode.insertBefore(dragEl, after ? row.nextSibling : row);
+        });
+        row.addEventListener('drop', () => {
+            const newOrderIds = [...wrap.querySelectorAll('.condition-group-row')].map(r => r.dataset.groupId);
+            builderState.groups.sort((a, b) => newOrderIds.indexOf(String(a.id)) - newOrderIds.indexOf(String(b.id)));
+            renderConditionGroups();
+            updatePreviewSummary();
+        });
+    });
+}
+
+function bindConditionEvents() {
+    const wrap = document.getElementById('condition-groups');
+
+    wrap.querySelectorAll('.group-name-input').forEach(inp => inp.addEventListener('input', () => {
+        const g = builderState.groups.find(x => x.id == inp.dataset.group);
+        g.name = inp.value;
+        refreshGroupNameValidation();
+        updatePreviewSummary();
+    }));
+
+    document.getElementById('add-group-btn')?.addEventListener('click', () => {
+        builderState.groups.push(newGroup(builderState.groups));
+        renderConditionGroups();
+        updatePreviewSummary();
+    });
+
+    wrap.querySelectorAll('.attr-select').forEach(sel => sel.addEventListener('change', () => {
+        const g = builderState.groups.find(x => x.id == sel.dataset.group);
+        const c = g.conditions.find(x => x.id == sel.dataset.cond);
+        c.attr = sel.value;
+        c.operator = getAttrConfig(getScopedProducts())[c.attr].operators[0];
+        c.value = '';
+        renderConditionGroups();
+        updatePreviewSummary();
+    }));
+
+    wrap.querySelectorAll('.cond-operator').forEach(sel => sel.addEventListener('change', () => {
+        const g = builderState.groups.find(x => x.id == sel.dataset.group);
+        const c = g.conditions.find(x => x.id == sel.dataset.cond);
+        c.operator = sel.value;
+        c.value = '';
+        renderConditionGroups();
+        updatePreviewSummary();
+    }));
+
+    wrap.querySelectorAll('.cond-value').forEach(el => el.addEventListener('input', () => {
+        const g = builderState.groups.find(x => x.id == el.dataset.group);
+        const c = g.conditions.find(x => x.id == el.dataset.cond);
+        c.value = el.value;
+        updatePreviewSummary();
+    }));
+    wrap.querySelectorAll('.cond-value').forEach(el => el.addEventListener('change', () => {
+        const g = builderState.groups.find(x => x.id == el.dataset.group);
+        const c = g.conditions.find(x => x.id == el.dataset.cond);
+        c.value = el.value;
+        updatePreviewSummary();
+    }));
+
+    wrap.querySelectorAll('.remove-cond-btn').forEach(btn => btn.addEventListener('click', () => {
+        const g = builderState.groups.find(x => x.id == btn.dataset.group);
+        if (g.conditions.length <= 1) return;
+        g.conditions = g.conditions.filter(c => c.id != btn.dataset.cond);
+        renderConditionGroups();
+        updatePreviewSummary();
+    }));
+
+    wrap.querySelectorAll('.add-cond-btn').forEach(btn => btn.addEventListener('click', () => {
+        const g = builderState.groups.find(x => x.id == btn.dataset.group);
+        g.conditions.push(newCondition());
+        renderConditionGroups();
+        updatePreviewSummary();
+    }));
+
+    wrap.querySelectorAll('.remove-group-btn').forEach(btn => btn.addEventListener('click', () => {
+        if (builderState.groups.length <= 1) return;
+        builderState.groups = builderState.groups.filter(g => g.id != btn.dataset.group);
+        renderConditionGroups();
+        updatePreviewSummary();
+    }));
+
+    wrap.querySelectorAll('input[name="group-relation"]').forEach(r => r.addEventListener('change', () => {
+        builderState.groupRelation = r.value;
+        updatePreviewSummary();
+    }));
+}
+
+function attributesAreComplete() {
+    return builderState.groups.every(g => g.conditions.every(c => String(c.value ?? '').trim() !== ''));
+}
+
+function updatePreviewSummary() {
+    const mode = document.querySelector('input[name="apply-mode"]:checked')?.value || 'all';
+    const meta = TYPE_META[builderState.type];
+    const target = mode === 'specific' ? (builderState.collection || '(no collection selected)') : 'all collection pages';
+
+    let productText;
+    if (builderState.productMode === 'specific') {
+        const count = builderState.selectedProducts.size;
+        productText = `<strong>${count}</strong> selected product${count === 1 ? '' : 's'}`;
+    } else {
+        const groupCount = builderState.groups.length;
+        const relation = groupCount > 1 ? ` (matched ${builderState.groupRelation === 'AND' ? 'across all' : 'in any'} group${groupCount === 1 ? '' : 's'})` : '';
+        productText = `products matching <strong>${groupCount}</strong> attribute condition group${groupCount === 1 ? '' : 's'}${relation}`;
+    }
+
+    document.getElementById('preview-summary').innerHTML =
+        `<i class="fas fa-info-circle mr-1 text-gray-400"></i> On <strong>${target}</strong>, ${productText} will be <strong>${meta.label.toLowerCase()}${builderState.type === 'hide' ? 'n' : 'ed'}</strong>.`;
+}
+
+// ==================== SAVE ====================
+document.getElementById('builder-save-btn').addEventListener('click', () => {
+    const name = document.getElementById('rule-name').value.trim();
+    const mode = document.querySelector('input[name="apply-mode"]:checked').value;
+
+    let valid = true;
+    document.getElementById('rule-name-error').classList.toggle('hidden', !!name);
+    if (!name) valid = false;
+
+    if (mode === 'specific' && !document.getElementById('collection-select').value) {
+        document.getElementById('collection-error').classList.remove('hidden');
+        valid = false;
+    } else {
+        document.getElementById('collection-error').classList.add('hidden');
+    }
+
+    if (builderState.productMode === 'specific') {
+        document.getElementById('attributes-error').classList.add('hidden');
+        if (builderState.selectedProducts.size === 0) {
+            document.getElementById('products-error').classList.remove('hidden');
+            valid = false;
+        } else {
+            document.getElementById('products-error').classList.add('hidden');
+        }
+    } else {
+        document.getElementById('products-error').classList.add('hidden');
+        if (!groupNamesAreValid()) {
+            document.getElementById('group-names-error').classList.remove('hidden');
+            refreshGroupNameValidation();
+            valid = false;
+        } else {
+            document.getElementById('group-names-error').classList.add('hidden');
+        }
+        if (!attributesAreComplete()) {
+            document.getElementById('attributes-error').classList.remove('hidden');
+            valid = false;
+        } else {
+            document.getElementById('attributes-error').classList.add('hidden');
+        }
+    }
+
+    if (!valid) return;
+
+    const payload = {
+        type: builderState.type,
+        name,
+        start: document.getElementById('start-date').value,
+        end: document.getElementById('end-date').value,
+        market: document.getElementById('market-select').value,
+        applyMode: mode,
+        collection: mode === 'specific' ? document.getElementById('collection-select').value : '',
+        productMode: builderState.productMode,
+        productIds: builderState.productMode === 'specific' ? [...builderState.selectedProducts] : [],
+        groups: builderState.productMode === 'attributes' ? JSON.parse(JSON.stringify(builderState.groups)) : [],
+        groupRelation: builderState.groupRelation,
+        _expiredApplied: false
+    };
+
+    if (editingId) {
+        const idx = rules.findIndex(r => r.id == editingId);
+        rules[idx] = { ...rules[idx], ...payload };
+    } else {
+        rules.push({ id: nextId++, enabled: true, ...payload });
+    }
+
+    closeBuilder();
+    renderRulesTable();
+});
+
+// ==================== INIT ====================
+renderRulesTable();
+</script>
+</body>
+</html>
