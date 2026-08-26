@@ -19,29 +19,29 @@
     .seg-btn { transition: all .12s ease; border-radius:6px; cursor:pointer; }
     .seg-btn.active { background:#fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 
-    /* ---- boost / demote / hide type tabs ---- */
+    /* ---- boost / demote / hide type tabs (no red — Shopify treats red as a destructive/error signal) ---- */
     .type-tab { transition: all .12s ease; cursor:pointer; border-bottom:2px solid transparent; }
     .type-tab:hover { color:#374151; }
     .type-tab.active-boost  { color:#1d4ed8; border-bottom-color:#2563eb; }
-    .type-tab.active-demote { color:#b45309; border-bottom-color:#d97706; }
-    .type-tab.active-hide   { color:#b91c1c; border-bottom-color:#dc2626; }
+    .type-tab.active-demote { color:#a16207; border-bottom-color:#eab308; }
+    .type-tab.active-hide   { color:#c2410c; border-bottom-color:#f97316; }
 
     /* ---- toggle switch ---- */
     .toggle-track { transition: background-color .15s ease; }
     .toggle-knob { transition: transform .15s ease; }
 
-    /* ---- rules table ---- */
+    /* ---- projects table ---- */
     .rule-row.dragging { opacity: .4; }
     .rule-row td { vertical-align: middle; }
     .drag-handle { cursor: grab; }
 
     .badge { display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:2px 9px; border-radius:9999px; }
     .badge-boost  { background:#dbeafe; color:#1d4ed8; }
-    .badge-demote { background:#fef3c7; color:#b45309; }
-    .badge-hide   { background:#fee2e2; color:#b91c1c; }
+    .badge-demote { background:#fef9c3; color:#854d0e; }
+    .badge-hide   { background:#ffedd5; color:#9a3412; }
     .badge-off    { background:#f3f4f6; color:#9ca3af; }
 
-    .step-panel.hidden, .type-panel.hidden { display:none; }
+    .type-panel.hidden { display:none; }
 
     .chip { display:inline-flex; align-items:center; gap:6px; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:9999px; padding:3px 10px 3px 12px; font-size:11px; color:#374151; }
     .chip button { color:#9ca3af; }
@@ -180,18 +180,11 @@ function newGroup(existingGroups) {
     return { id: condIdSeq++, name: `Condition Group ${n}`, conditions: [newCondition()] };
 }
 
+function blankApplyConfig() {
+    return { applyMode: 'all', matchMode: 'contains', terms: [], collection: '' };
+}
 function blankRule() {
-    return {
-        enabled: false,
-        applyMode: 'all',
-        matchMode: 'contains',
-        terms: [],
-        collection: '',
-        productMode: 'specific',
-        productIds: [],
-        groups: [],
-        groupRelation: 'AND'
-    };
+    return { enabled: false, productMode: 'specific', productIds: [], groups: [], groupRelation: 'AND' };
 }
 
 function loadProjects(key, seed) {
@@ -220,6 +213,7 @@ const MODE_CONFIG = {
         emptyHeading: 'No projects yet',
         emptyParagraph: 'A project groups your search merchandising under one schedule. Inside it you can boost best sellers, demote slow movers, and hide what shouldn\'t appear — all at once.',
         projectNamePlaceholder: 'e.g. Summer Sale Campaign',
+        applyLabel: 'Where it applies',
         typeDesc: {
             boost:  'Selected products rank higher when shoppers search these terms.',
             demote: 'Selected products rank lower when shoppers search these terms.',
@@ -230,18 +224,20 @@ const MODE_CONFIG = {
             {
                 id: 1, name: 'Summer Sale Campaign', start: '2026-06-01', end: '2026-09-30',
                 market: 'Store default', enabled: true, _expiredApplied: false,
+                applyConfig: { applyMode:'specific', matchMode:'contains', terms:['summer','sale'], collection:'' },
                 rules: {
-                    boost:  { ...blankRule(), enabled:true, applyMode:'specific', matchMode:'contains', terms:['summer','sale'], productMode:'specific', productIds:[1,5,21] },
+                    boost:  { ...blankRule(), enabled:true, productMode:'specific', productIds:[1,5,21] },
                     demote: { ...blankRule() },
-                    hide:   { ...blankRule(), enabled:true, applyMode:'all', productMode:'specific', productIds:[3] }
+                    hide:   { ...blankRule(), enabled:true, productMode:'specific', productIds:[3] }
                 }
             },
             {
                 id: 2, name: 'Clearance Cleanup', start: '2026-01-01', end: '2026-03-01',
                 market: 'Store default', enabled: true, _expiredApplied: false,
+                applyConfig: { applyMode:'specific', matchMode:'is', terms:['clearance'], collection:'' },
                 rules: {
                     boost:  { ...blankRule() },
-                    demote: { ...blankRule(), enabled:true, applyMode:'specific', matchMode:'is', terms:['clearance'], productMode:'specific', productIds:[2,4] },
+                    demote: { ...blankRule(), enabled:true, productMode:'specific', productIds:[2,4] },
                     hide:   { ...blankRule() }
                 }
             }
@@ -254,6 +250,7 @@ const MODE_CONFIG = {
         emptyHeading: 'No projects yet',
         emptyParagraph: 'A project groups your collection merchandising under one schedule. Inside it you can boost best sellers, demote slow movers, and hide what shouldn\'t appear — all at once.',
         projectNamePlaceholder: 'e.g. Holiday Jewelry Push',
+        applyLabel: 'Where it applies',
         typeDesc: {
             boost:  'Selected products are pinned higher on the collection page.',
             demote: 'Selected products rank lower on the collection page.',
@@ -264,19 +261,21 @@ const MODE_CONFIG = {
             {
                 id: 1, name: 'Holiday Jewelry Push', start: '', end: '',
                 market: 'Store default', enabled: true, _expiredApplied: false,
+                applyConfig: { applyMode:'specific', matchMode:'contains', terms:[], collection:'Rings' },
                 rules: {
-                    boost:  { ...blankRule(), enabled:true, applyMode:'specific', collection:'Rings', productMode:'specific', productIds:[1,2] },
+                    boost:  { ...blankRule(), enabled:true, productMode:'specific', productIds:[1,2] },
                     demote: { ...blankRule() },
-                    hide:   { ...blankRule(), enabled:true, applyMode:'all', productMode:'attributes',
+                    hide:   { ...blankRule(), enabled:true, productMode:'attributes',
                               groups:[{ id:9001, name:'Condition Group 1', conditions:[{ id:9002, attr:'Inventory', operator:'is', value:'Out of stock' }] }] }
                 }
             },
             {
                 id: 2, name: 'Slow Mover Cleanup', start: '2026-01-01', end: '2026-02-01',
                 market: 'Store default', enabled: true, _expiredApplied: false,
+                applyConfig: { applyMode:'specific', matchMode:'contains', terms:[], collection:'Necklaces' },
                 rules: {
                     boost:  { ...blankRule() },
-                    demote: { ...blankRule(), enabled:true, applyMode:'specific', collection:'Necklaces', productMode:'specific', productIds:[6] },
+                    demote: { ...blankRule(), enabled:true, productMode:'specific', productIds:[6] },
                     hide:   { ...blankRule() }
                 }
             }
@@ -285,59 +284,58 @@ const MODE_CONFIG = {
 };
 
 // ==================== TEMPLATES ====================
-function applyToBlock(mode, type) {
-    const sfx = `${mode}-${type}`;
+function applyToBlock(mode) {
     if (mode === 'search') {
         return `
         <div class="seg mb-3">
             <label class="seg-btn px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-pointer">
-                <input type="radio" name="apply-mode-${sfx}" value="all" checked class="hidden"><span>All Search Terms</span>
+                <input type="radio" name="apply-mode-${mode}" value="all" checked class="hidden"><span>All Search Terms</span>
             </label>
             <label class="seg-btn px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-pointer">
-                <input type="radio" name="apply-mode-${sfx}" value="specific" class="hidden"><span>Specific Terms</span>
+                <input type="radio" name="apply-mode-${mode}" value="specific" class="hidden"><span>Specific Terms</span>
             </label>
         </div>
-        <p id="all-terms-note-${sfx}" class="hidden text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-md px-3 py-2.5 leading-relaxed">
-            This applies to every search — any matching product is affected wherever it appears in results.
+        <p id="all-terms-note-${mode}" class="hidden text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-md px-3 py-2.5 leading-relaxed">
+            This applies to every rule in the project — any matching product is affected wherever it appears in search.
         </p>
-        <div id="specific-box-${sfx}" class="hidden space-y-2.5">
+        <div id="specific-box-${mode}" class="hidden space-y-2.5">
             <div class="flex items-center gap-2">
                 <span class="text-xs text-gray-500">Match</span>
                 <div class="relative">
-                    <select id="match-mode-${sfx}" class="border border-gray-300 rounded-md py-1 pl-2 pr-6 text-xs appearance-none bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <select id="match-mode-${mode}" class="border border-gray-300 rounded-md py-1 pl-2 pr-6 text-xs appearance-none bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                         <option value="contains">Contains</option>
                         <option value="is">Is exactly</option>
                     </select>
                     <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-[9px]"></i></div>
                 </div>
             </div>
-            <div id="terms-chip-list-${sfx}" class="flex flex-wrap gap-1.5 min-h-[24px]"></div>
+            <div id="terms-chip-list-${mode}" class="flex flex-wrap gap-1.5 min-h-[24px]"></div>
             <div class="flex gap-2">
-                <input id="term-input-${sfx}" type="text" placeholder="Type terms, comma-separated, then Enter" class="flex-1 border border-gray-300 rounded-md py-1.5 px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-                <button id="term-add-btn-${sfx}" type="button" class="px-3 py-1.5 border border-gray-300 rounded-md text-xs font-medium bg-white hover:bg-gray-50">Add</button>
+                <input id="term-input-${mode}" type="text" placeholder="Type terms, comma-separated, then Enter" class="flex-1 border border-gray-300 rounded-md py-1.5 px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <button id="term-add-btn-${mode}" type="button" class="px-3 py-1.5 border border-gray-300 rounded-md text-xs font-medium bg-white hover:bg-gray-50">Add</button>
             </div>
-            <p id="terms-error-${sfx}" class="hidden text-[11px] text-red-600">Add at least one search term.</p>
-            <p id="terms-duplicate-warning-${sfx}" class="hidden text-[11px] text-amber-600">Some terms already existed and were skipped.</p>
+            <p id="terms-error-${mode}" class="hidden text-[11px] text-red-600">Add at least one search term.</p>
+            <p id="terms-duplicate-warning-${mode}" class="hidden text-[11px] text-amber-600">Some terms already existed and were skipped.</p>
         </div>`;
     }
     return `
     <div class="seg mb-3">
         <label class="seg-btn px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-pointer">
-            <input type="radio" name="apply-mode-${sfx}" value="all" checked class="hidden"><span>All Collections</span>
+            <input type="radio" name="apply-mode-${mode}" value="all" checked class="hidden"><span>All Collections</span>
         </label>
         <label class="seg-btn px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-pointer">
-            <input type="radio" name="apply-mode-${sfx}" value="specific" class="hidden"><span>One Collection</span>
+            <input type="radio" name="apply-mode-${mode}" value="specific" class="hidden"><span>One Collection</span>
         </label>
     </div>
-    <div id="specific-box-${sfx}" class="hidden space-y-2">
+    <div id="specific-box-${mode}" class="hidden space-y-2">
         <div class="relative">
-            <select id="collection-select-${sfx}" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm appearance-none bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <select id="collection-select-${mode}" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm appearance-none bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="">Select a collection</option>
                 ${COLLECTIONS.map(cn => `<option value="${cn}">${cn}</option>`).join('')}
             </select>
             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-xs"></i></div>
         </div>
-        <p id="collection-error-${sfx}" class="hidden text-[11px] text-red-600">Please select a collection.</p>
+        <p id="collection-error-${mode}" class="hidden text-[11px] text-red-600">Please select a collection.</p>
     </div>`;
 }
 
@@ -363,45 +361,38 @@ function typePanelTemplate(mode, type) {
             <p class="text-[11px] text-gray-400 mt-1">Turn it on above to set it up. Leaving it off means this project won't ${t.label.toLowerCase()} anything.</p>
         </div>
 
-        <div id="type-body-${sfx}" class="hidden space-y-6">
-            <div>
-                <label class="block text-xs font-semibold text-gray-700 mb-2">Where it applies</label>
-                ${applyToBlock(mode, type)}
+        <div id="type-body-${sfx}" class="hidden space-y-4">
+            <label class="block text-xs font-semibold text-gray-700">Which products <span class="text-red-500">*</span></label>
+
+            <div class="seg mb-1">
+                <label class="seg-btn px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-pointer">
+                    <input type="radio" name="product-mode-${sfx}" value="specific" class="hidden"><span>Pick products</span>
+                </label>
+                <label class="seg-btn px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-pointer">
+                    <input type="radio" name="product-mode-${sfx}" value="attributes" class="hidden"><span>By attributes</span>
+                </label>
             </div>
 
-            <div class="border-t border-gray-100 pt-5">
-                <label class="block text-xs font-semibold text-gray-700 mb-2">Which products <span class="text-red-500">*</span></label>
+            ${mode === 'collection' ? `<p id="scope-note-${sfx}" class="text-[11px] text-gray-400"></p>` : ''}
 
-                <div class="seg mb-3">
-                    <label class="seg-btn px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-pointer">
-                        <input type="radio" name="product-mode-${sfx}" value="specific" class="hidden"><span>Pick products</span>
-                    </label>
-                    <label class="seg-btn px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-pointer">
-                        <input type="radio" name="product-mode-${sfx}" value="attributes" class="hidden"><span>By attributes</span>
-                    </label>
+            <div id="specific-products-panel-${sfx}">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] text-gray-400">Up to ${MAX_PRODUCTS} products</span>
+                    <span id="selected-count-${sfx}" class="text-[11px] text-gray-400">0/${MAX_PRODUCTS} selected</span>
                 </div>
-
-                ${mode === 'collection' ? `<p id="scope-note-${sfx}" class="text-[11px] text-gray-400 mb-2"></p>` : ''}
-
-                <div id="specific-products-panel-${sfx}">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-[11px] text-gray-400">Up to ${MAX_PRODUCTS} products</span>
-                        <span id="selected-count-${sfx}" class="text-[11px] text-gray-400">0/${MAX_PRODUCTS} selected</span>
-                    </div>
-                    <div id="selected-chips-${sfx}" class="flex flex-wrap gap-1.5 mb-2 empty:hidden"></div>
-                    <div class="relative mb-2.5">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                        <input id="product-search-${sfx}" type="text" placeholder="Search products..." class="w-full border border-gray-300 rounded-md py-2 pl-8 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    </div>
-                    <div id="product-list-${sfx}" class="border border-gray-200 rounded-md bg-white max-h-64 overflow-y-auto divide-y divide-gray-100 shadow-inner"></div>
-                    <p id="products-error-${sfx}" class="hidden text-[11px] text-red-600 mt-1.5">Select at least one product.</p>
+                <div id="selected-chips-${sfx}" class="flex flex-wrap gap-1.5 mb-2 empty:hidden"></div>
+                <div class="relative mb-2.5">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input id="product-search-${sfx}" type="text" placeholder="Search products..." class="w-full border border-gray-300 rounded-md py-2 pl-8 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                 </div>
+                <div id="product-list-${sfx}" class="border border-gray-200 rounded-md bg-white max-h-64 overflow-y-auto divide-y divide-gray-100 shadow-inner"></div>
+                <p id="products-error-${sfx}" class="hidden text-[11px] text-red-600 mt-1.5">Select at least one product.</p>
+            </div>
 
-                <div id="attributes-panel-${sfx}" class="hidden">
-                    <div id="condition-groups-${sfx}" class="space-y-2.5"></div>
-                    <p id="group-names-error-${sfx}" class="hidden text-[11px] text-red-600 mt-1.5">Give each condition group a unique name.</p>
-                    <p id="attributes-error-${sfx}" class="hidden text-[11px] text-red-600 mt-1.5">Please complete all attribute conditions.</p>
-                </div>
+            <div id="attributes-panel-${sfx}" class="hidden">
+                <div id="condition-groups-${sfx}" class="space-y-2.5"></div>
+                <p id="group-names-error-${sfx}" class="hidden text-[11px] text-red-600 mt-1.5">Give each condition group a unique name.</p>
+                <p id="attributes-error-${sfx}" class="hidden text-[11px] text-red-600 mt-1.5">Please complete all attribute conditions.</p>
             </div>
 
             <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-[11px] text-gray-500 leading-relaxed" id="preview-summary-${sfx}"></div>
@@ -458,75 +449,81 @@ function pageTemplate(mode) {
             <div id="builder-title-${mode}" class="text-sm font-bold tracking-wide text-gray-800">ADD A NEW PROJECT</div>
             <div class="flex items-center gap-2">
                 <button id="builder-cancel-btn-${mode}" class="px-4 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">Cancel</button>
-                <button id="builder-save-btn-${mode}" class="px-4 py-1.5 bg-zinc-800 rounded text-xs font-semibold text-white hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-800" disabled>Save Project</button>
+                <button id="builder-save-btn-${mode}" class="px-4 py-1.5 bg-zinc-800 rounded text-xs font-semibold text-white hover:bg-zinc-700">Save Project</button>
             </div>
         </div>
 
-        <div class="p-8 max-w-2xl mx-auto space-y-6">
-            <!-- STEP 1: Project details -->
-            <div id="step-1-${mode}" class="step-panel space-y-4">
-                <div class="flex items-center gap-2">
-                    <span class="w-5 h-5 rounded-full bg-zinc-800 text-white text-[10px] font-bold flex items-center justify-center shrink-0">1</span>
-                    <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Project details</span>
-                </div>
+        <div class="p-8 max-w-6xl mx-auto">
+            <div class="grid grid-cols-2 gap-10 items-start">
+                <!-- LEFT: Project details -->
+                <div class="space-y-5">
+                    <div class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-zinc-800 text-white text-[10px] font-bold flex items-center justify-center shrink-0">1</span>
+                        <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Project details</span>
+                    </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Project name <span class="text-red-500">*</span></label>
-                    <input id="project-name-${mode}" type="text" maxlength="60" placeholder="${c.projectNamePlaceholder}" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <p id="project-name-error-${mode}" class="hidden text-[11px] text-red-600 mt-1">Give this project a name.</p>
-                </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Project name <span class="text-red-500">*</span></label>
+                        <input id="project-name-${mode}" type="text" maxlength="60" placeholder="${c.projectNamePlaceholder}" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <p id="project-name-error-${mode}" class="hidden text-[11px] text-red-600 mt-1">Give this project a name.</p>
+                    </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Schedule</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[11px] text-gray-500 mb-1">Start Date</label>
-                            <input id="start-date-${mode}" type="date" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Schedule</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] text-gray-500 mb-1">Start Date</label>
+                                <input id="start-date-${mode}" type="date" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-500 mb-1">End Date</label>
+                                <input id="end-date-${mode}" type="date" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-[11px] text-gray-500 mb-1">End Date</label>
-                            <input id="end-date-${mode}" type="date" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <p class="text-[11px] text-gray-400 mt-1.5">Applies to every rule in this project. Leave blank to run forever.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Market</label>
+                        <div class="relative">
+                            <select id="market-select-${mode}" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm appearance-none bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <option>Store default</option>
+                                <option>United States</option>
+                                <option>European Union</option>
+                                <option>Asia Pacific</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-xs"></i></div>
                         </div>
                     </div>
-                    <p class="text-[11px] text-gray-400 mt-1.5">Applies to every rule in this project. Leave blank to run forever.</p>
-                </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Market</label>
-                    <div class="relative">
-                        <select id="market-select-${mode}" class="w-full border border-gray-300 rounded-md py-2 px-3 text-sm appearance-none bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                            <option>Store default</option>
-                            <option>United States</option>
-                            <option>European Union</option>
-                            <option>Asia Pacific</option>
-                        </select>
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400"><i class="fas fa-chevron-down text-xs"></i></div>
+                    <div class="border-t border-gray-100 pt-5">
+                        <label class="block text-xs font-semibold text-gray-700 mb-2">${c.applyLabel} <span class="text-red-500">*</span></label>
+                        <p class="text-[11px] text-gray-400 -mt-1 mb-3">Shared by every rule (Boost, Demote, Hide) in this project.</p>
+                        ${applyToBlock(mode)}
                     </div>
                 </div>
 
-                <button type="button" id="step-continue-btn-${mode}" class="px-4 py-1.5 bg-zinc-800 rounded text-xs font-semibold text-white hover:bg-zinc-700">Continue</button>
-            </div>
+                <!-- RIGHT: Rules -->
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-5 h-5 rounded-full bg-zinc-800 text-white text-[10px] font-bold flex items-center justify-center shrink-0">2</span>
+                        <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Rules</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mb-4 ml-7">Set up any combination. Only the ones you turn on will apply.</p>
 
-            <!-- STEP 2: Rules -->
-            <div id="step-2-${mode}" class="step-panel hidden border-t border-gray-100 pt-6">
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="w-5 h-5 rounded-full bg-zinc-800 text-white text-[10px] font-bold flex items-center justify-center shrink-0">2</span>
-                    <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Rules</span>
+                    <div class="flex items-center gap-1 border-b border-gray-200 mb-5">
+                        ${TYPES.map(t => `
+                            <button type="button" class="type-tab type-tab-${mode} px-4 py-2.5 text-xs font-semibold text-gray-400 flex items-center gap-2" data-type="${t}">
+                                ${TYPE_META[t].label}
+                                <span id="tab-dot-${mode}-${t}" class="badge badge-off">Off</span>
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    ${TYPES.map(t => typePanelTemplate(mode, t)).join('')}
+
+                    <p id="no-rule-error-${mode}" class="hidden text-[11px] text-red-600 mt-4">Turn on at least one of Boost, Demote, or Hide.</p>
                 </div>
-                <p class="text-[11px] text-gray-400 mb-4 ml-7">Set up any combination. Only the ones you turn on will apply.</p>
-
-                <div class="flex items-center gap-1 border-b border-gray-200 mb-5">
-                    ${TYPES.map(t => `
-                        <button type="button" class="type-tab type-tab-${mode} px-4 py-2.5 text-xs font-semibold text-gray-400 flex items-center gap-2" data-type="${t}">
-                            ${TYPE_META[t].label}
-                            <span id="tab-dot-${mode}-${t}" class="badge badge-off">Off</span>
-                        </button>
-                    `).join('')}
-                </div>
-
-                ${TYPES.map(t => typePanelTemplate(mode, t)).join('')}
-
-                <p id="no-rule-error-${mode}" class="hidden text-[11px] text-red-600 mt-4">Turn on at least one of Boost, Demote, or Hide.</p>
             </div>
         </div>
     </div>`;
@@ -536,22 +533,11 @@ function pageTemplate(mode) {
 function initRuleEditor(mode, type, ctx) {
     const sfx = `${mode}-${type}`;
     const $ = name => document.getElementById(`${name}-${sfx}`);
-    const c = MODE_CONFIG[mode];
 
     let state = blankRule();
     state.groups = [newGroup()];
     let selectedProducts = new Set();
     let productQuery = '';
-
-    // ---------- scope ----------
-    function getScopedProducts() {
-        if (mode !== 'collection') return PRODUCTS;
-        if (state.applyMode === 'specific') {
-            if (!state.collection) return [];
-            return PRODUCTS.filter(p => p.collections.includes(state.collection));
-        }
-        return PRODUCTS;
-    }
 
     // ---------- enable toggle ----------
     $('type-toggle').addEventListener('click', () => setEnabled(!state.enabled));
@@ -569,7 +555,7 @@ function initRuleEditor(mode, type, ctx) {
         ctx.onEnabledChange();
     }
 
-    // ---------- apply mode ----------
+    // ---------- product mode ----------
     function syncSeg(radioName) {
         document.querySelectorAll(`input[name="${radioName}-${sfx}"]`).forEach(r => {
             const label = r.closest('.seg-btn');
@@ -579,85 +565,6 @@ function initRuleEditor(mode, type, ctx) {
         });
     }
 
-    document.querySelectorAll(`input[name="apply-mode-${sfx}"]`).forEach(r => r.addEventListener('change', () => {
-        state.applyMode = r.value;
-        syncSeg('apply-mode');
-        refreshApplyMode();
-    }));
-
-    function refreshApplyMode() {
-        $('specific-box').classList.toggle('hidden', state.applyMode !== 'specific');
-        if (mode === 'search') $('all-terms-note').classList.toggle('hidden', state.applyMode !== 'all');
-        if (mode === 'collection') onScopeChange();
-        renderPreview();
-    }
-
-    if (mode === 'collection') {
-        $('collection-select').addEventListener('change', e => {
-            state.collection = e.target.value;
-            onScopeChange();
-        });
-    }
-
-    function onScopeChange() {
-        const scoped = getScopedProducts();
-        const ids = new Set(scoped.map(p => p.id));
-        [...selectedProducts].forEach(id => { if (!ids.has(id)) selectedProducts.delete(id); });
-        const cfg = getAttrConfig(mode, scoped);
-        state.groups.forEach(g => g.conditions.forEach(cond => {
-            const conf = cfg[cond.attr];
-            if (conf.options && cond.value && !conf.options.includes(cond.value)) cond.value = '';
-        }));
-        const note = $('scope-note');
-        if (note) {
-            if (state.applyMode === 'specific' && !state.collection) note.textContent = 'Select a collection above to browse its products.';
-            else if (state.applyMode === 'specific') note.textContent = `Showing products from "${state.collection}" only.`;
-            else note.textContent = 'Showing every product in your store.';
-        }
-        renderProductList();
-        renderSelectedChips();
-        renderConditionGroups();
-        renderPreview();
-    }
-
-    // ---------- search terms ----------
-    if (mode === 'search') {
-        $('match-mode').addEventListener('change', e => { state.matchMode = e.target.value; renderPreview(); });
-
-        const addTerm = () => {
-            const input = $('term-input');
-            const raw = input.value;
-            if (!raw.trim()) return;
-            const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
-            let skipped = false;
-            parts.forEach(p => {
-                if (state.terms.some(t => t.toLowerCase() === p.toLowerCase())) skipped = true;
-                else state.terms.push(p);
-            });
-            input.value = '';
-            $('terms-duplicate-warning').classList.toggle('hidden', !skipped);
-            if (parts.length) $('terms-error').classList.add('hidden');
-            renderTermChips();
-            renderPreview();
-        };
-        $('term-add-btn').addEventListener('click', addTerm);
-        $('term-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTerm(); } });
-    }
-
-    function renderTermChips() {
-        if (mode !== 'search') return;
-        const list = $('terms-chip-list');
-        list.innerHTML = state.terms.map(t => `
-            <span class="chip">${t}<button data-term="${escapeAttr(t)}" class="remove-term-btn"><i class="fas fa-times text-[9px]"></i></button></span>
-        `).join('');
-        list.querySelectorAll('.remove-term-btn').forEach(btn => btn.addEventListener('click', () => {
-            state.terms = state.terms.filter(t => t !== btn.dataset.term);
-            renderTermChips();
-            renderPreview();
-        }));
-    }
-
-    // ---------- product mode ----------
     document.querySelectorAll(`input[name="product-mode-${sfx}"]`).forEach(r => r.addEventListener('change', () => setProductMode(r.value)));
 
     function setProductMode(pmode) {
@@ -675,12 +582,12 @@ function initRuleEditor(mode, type, ctx) {
     function renderProductList() {
         const q = productQuery.toLowerCase();
         const list = $('product-list');
-        const scoped = getScopedProducts();
+        const scoped = ctx.getScopedProducts();
         const filtered = scoped.filter(p => p.name.toLowerCase().includes(q));
         const atMax = selectedProducts.size >= MAX_PRODUCTS;
 
         if (scoped.length === 0) {
-            list.innerHTML = `<div class="text-center text-xs text-gray-400 py-8">Select a collection to see its products.</div>`;
+            list.innerHTML = `<div class="text-center text-xs text-gray-400 py-8">Select a collection on the left to see its products.</div>`;
             return;
         }
         if (filtered.length === 0) {
@@ -728,7 +635,7 @@ function initRuleEditor(mode, type, ctx) {
 
     // ---------- attribute condition groups ----------
     function renderConditionValueControl(groupId, cond) {
-        const cfg = getAttrConfig(mode, getScopedProducts())[cond.attr];
+        const cfg = getAttrConfig(mode, ctx.getScopedProducts())[cond.attr];
         let operatorHtml;
         if (cfg.operators.length > 1) {
             operatorHtml = `<div class="relative shrink-0">
@@ -769,7 +676,7 @@ function initRuleEditor(mode, type, ctx) {
     }
 
     function renderConditionRow(groupId, cond, condCount) {
-        const attrKeys = Object.keys(getAttrConfig(mode, getScopedProducts()));
+        const attrKeys = Object.keys(getAttrConfig(mode, ctx.getScopedProducts()));
         return `
         <div class="flex items-center gap-2">
             <select class="attr-select border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white w-32 shrink-0" data-group="${groupId}" data-cond="${cond.id}">
@@ -885,7 +792,7 @@ function initRuleEditor(mode, type, ctx) {
             const g = state.groups.find(x => x.id == sel.dataset.group);
             const cond = g.conditions.find(x => x.id == sel.dataset.cond);
             cond.attr = sel.value;
-            cond.operator = getAttrConfig(mode, getScopedProducts())[cond.attr].operators[0];
+            cond.operator = getAttrConfig(mode, ctx.getScopedProducts())[cond.attr].operators[0];
             cond.value = '';
             renderConditionGroups();
             renderPreview();
@@ -944,19 +851,7 @@ function initRuleEditor(mode, type, ctx) {
     // ---------- preview ----------
     function renderPreview() {
         const t = TYPE_META[type];
-        let contextText;
-        if (mode === 'search') {
-            if (state.applyMode === 'specific') {
-                const mm = state.matchMode === 'is' ? 'is exactly' : 'contains';
-                contextText = state.terms.length
-                    ? `a search term that ${mm} ${state.terms.map(x => '"' + x + '"').join(', ')}`
-                    : '(no terms added yet)';
-            } else contextText = 'any search term';
-        } else {
-            contextText = state.applyMode === 'specific'
-                ? (state.collection || '(no collection selected)')
-                : 'all collection pages';
-        }
+        const contextText = ctx.getApplyContextText();
 
         let productText;
         if (state.productMode === 'specific') {
@@ -984,26 +879,31 @@ function initRuleEditor(mode, type, ctx) {
             state = {
                 ...blankRule(),
                 ...rule,
-                terms: [...(rule.terms || [])],
                 groups: rule.groups && rule.groups.length ? JSON.parse(JSON.stringify(rule.groups)) : [newGroup()]
             };
             selectedProducts = new Set(rule.productMode === 'attributes' ? [] : (rule.productIds || []));
             productQuery = '';
-
-            document.querySelectorAll(`input[name="apply-mode-${sfx}"]`).forEach(r => { r.checked = r.value === state.applyMode; });
-            if (mode === 'search') $('match-mode').value = state.matchMode || 'contains';
-            if (mode === 'collection') $('collection-select').value = state.collection || '';
             $('product-search').value = '';
 
             ['products-error', 'attributes-error', 'group-names-error'].forEach(id => $(id).classList.add('hidden'));
-            if (mode === 'search') { $('terms-error').classList.add('hidden'); $('terms-duplicate-warning').classList.add('hidden'); }
-            if (mode === 'collection') $('collection-error').classList.add('hidden');
 
             setEnabled(state.enabled);
-            syncSeg('apply-mode');
-            refreshApplyMode();
-            renderTermChips();
             setProductMode(state.productMode);
+            this.refreshScope();
+        },
+
+        // called whenever the project-level "where/how it applies" config changes
+        refreshScope() {
+            const scoped = ctx.getScopedProducts();
+            const ids = new Set(scoped.map(p => p.id));
+            [...selectedProducts].forEach(id => { if (!ids.has(id)) selectedProducts.delete(id); });
+            const cfg = getAttrConfig(mode, scoped);
+            state.groups.forEach(g => g.conditions.forEach(cond => {
+                const conf = cfg[cond.attr];
+                if (conf.options && cond.value && !conf.options.includes(cond.value)) cond.value = '';
+            }));
+            const note = $('scope-note');
+            if (note) note.textContent = ctx.getScopeNoteText();
             renderProductList();
             renderSelectedChips();
             renderConditionGroups();
@@ -1013,14 +913,6 @@ function initRuleEditor(mode, type, ctx) {
         validate() {
             if (!state.enabled) return true;
             let ok = true;
-
-            if (mode === 'search' && state.applyMode === 'specific' && state.terms.length === 0) {
-                $('terms-error').classList.remove('hidden'); ok = false;
-            }
-            if (mode === 'collection' && state.applyMode === 'specific' && !state.collection) {
-                $('collection-error').classList.remove('hidden'); ok = false;
-            }
-
             if (state.productMode === 'specific') {
                 if (selectedProducts.size === 0) { $('products-error').classList.remove('hidden'); ok = false; }
                 else $('products-error').classList.add('hidden');
@@ -1036,10 +928,6 @@ function initRuleEditor(mode, type, ctx) {
         collect() {
             return {
                 enabled: state.enabled,
-                applyMode: state.applyMode,
-                matchMode: state.matchMode,
-                terms: mode === 'search' && state.applyMode === 'specific' ? [...state.terms] : [],
-                collection: mode === 'collection' && state.applyMode === 'specific' ? state.collection : '',
                 productMode: state.productMode,
                 productIds: state.productMode === 'specific' ? [...selectedProducts] : [],
                 groups: state.productMode === 'attributes' ? JSON.parse(JSON.stringify(state.groups)) : [],
@@ -1057,6 +945,7 @@ function initApp(mode) {
     let projects = loadProjects(c.storageKey, c.seed);
     let nextId = Math.max(0, ...projects.map(p => p.id)) + 1;
     let editingId = null;
+    let applyConfig = blankApplyConfig();
 
     const listScreen = $('list-screen');
     const builderScreen = $('builder-screen');
@@ -1065,10 +954,128 @@ function initApp(mode) {
     const tableCard = $('projects-table-card');
     const listHeader = $('list-header');
 
+    // ---------- shared "where/how it applies" (used by every rule type) ----------
+    function getScopedProducts() {
+        if (mode !== 'collection') return PRODUCTS;
+        if (applyConfig.applyMode === 'specific') {
+            if (!applyConfig.collection) return [];
+            return PRODUCTS.filter(p => p.collections.includes(applyConfig.collection));
+        }
+        return PRODUCTS;
+    }
+
+    function getScopeNoteText() {
+        if (mode !== 'collection') return '';
+        if (applyConfig.applyMode === 'specific' && !applyConfig.collection) return 'Select a collection on the left to browse its products.';
+        if (applyConfig.applyMode === 'specific') return `Showing products from "${applyConfig.collection}" only.`;
+        return 'Showing every product in your store.';
+    }
+
+    function getApplyContextText() {
+        if (mode === 'search') {
+            if (applyConfig.applyMode === 'specific') {
+                const mm = applyConfig.matchMode === 'is' ? 'is exactly' : 'contains';
+                return applyConfig.terms.length
+                    ? `a search term that ${mm} ${applyConfig.terms.map(x => '"' + x + '"').join(', ')}`
+                    : '(no terms added yet)';
+            }
+            return 'any search term';
+        }
+        return applyConfig.applyMode === 'specific' ? (applyConfig.collection || '(no collection selected)') : 'all collection pages';
+    }
+
     const editors = {};
     TYPES.forEach(t => {
-        editors[t] = initRuleEditor(mode, t, { onEnabledChange: () => { refreshTabDots(); validateHasRule(false); } });
+        editors[t] = initRuleEditor(mode, t, {
+            onEnabledChange: () => { refreshTabDots(); validateHasRule(false); },
+            getScopedProducts,
+            getScopeNoteText,
+            getApplyContextText
+        });
     });
+
+    function onApplyConfigChange() {
+        TYPES.forEach(t => editors[t].refreshScope());
+    }
+
+    function syncApplySegUI() {
+        document.querySelectorAll(`input[name="apply-mode-${mode}"]`).forEach(r => {
+            const label = r.closest('.seg-btn');
+            label.classList.toggle('active', r.checked);
+            label.classList.toggle('text-gray-900', r.checked);
+            label.classList.toggle('text-gray-500', !r.checked);
+        });
+    }
+
+    function refreshApplyVisibility() {
+        $('specific-box').classList.toggle('hidden', applyConfig.applyMode !== 'specific');
+        if (mode === 'search') $('all-terms-note').classList.toggle('hidden', applyConfig.applyMode !== 'all');
+    }
+
+    document.querySelectorAll(`input[name="apply-mode-${mode}"]`).forEach(r => r.addEventListener('change', () => {
+        applyConfig.applyMode = r.value;
+        syncApplySegUI();
+        refreshApplyVisibility();
+        onApplyConfigChange();
+    }));
+
+    if (mode === 'collection') {
+        $('collection-select').addEventListener('change', e => {
+            applyConfig.collection = e.target.value;
+            onApplyConfigChange();
+        });
+    }
+
+    if (mode === 'search') {
+        $('match-mode').addEventListener('change', e => { applyConfig.matchMode = e.target.value; onApplyConfigChange(); });
+
+        const addTerm = () => {
+            const input = $('term-input');
+            const raw = input.value;
+            if (!raw.trim()) return;
+            const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+            let skipped = false;
+            parts.forEach(p => {
+                if (applyConfig.terms.some(t => t.toLowerCase() === p.toLowerCase())) skipped = true;
+                else applyConfig.terms.push(p);
+            });
+            input.value = '';
+            $('terms-duplicate-warning').classList.toggle('hidden', !skipped);
+            if (parts.length) $('terms-error').classList.add('hidden');
+            renderTermChips();
+            onApplyConfigChange();
+        };
+        $('term-add-btn').addEventListener('click', addTerm);
+        $('term-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTerm(); } });
+    }
+
+    function renderTermChips() {
+        if (mode !== 'search') return;
+        const list = $('terms-chip-list');
+        list.innerHTML = applyConfig.terms.map(t => `
+            <span class="chip">${t}<button data-term="${escapeAttr(t)}" class="remove-term-btn"><i class="fas fa-times text-[9px]"></i></button></span>
+        `).join('');
+        list.querySelectorAll('.remove-term-btn').forEach(btn => btn.addEventListener('click', () => {
+            applyConfig.terms = applyConfig.terms.filter(t => t !== btn.dataset.term);
+            renderTermChips();
+            onApplyConfigChange();
+        }));
+    }
+
+    function validateApplyConfig() {
+        let ok = true;
+        if (mode === 'search') {
+            if (applyConfig.applyMode === 'specific' && applyConfig.terms.length === 0) {
+                $('terms-error').classList.remove('hidden'); ok = false;
+            } else $('terms-error').classList.add('hidden');
+        }
+        if (mode === 'collection') {
+            if (applyConfig.applyMode === 'specific' && !applyConfig.collection) {
+                $('collection-error').classList.remove('hidden'); ok = false;
+            } else $('collection-error').classList.add('hidden');
+        }
+        return ok;
+    }
 
     function fmtDate(d) {
         if (!d) return null;
@@ -1157,9 +1164,7 @@ function initApp(mode) {
     }
 
     // ---------- type tabs ----------
-    let activeType = 'boost';
     function setActiveType(t) {
-        activeType = t;
         document.querySelectorAll('.type-tab-' + mode).forEach(tab => {
             const on = tab.dataset.type === t;
             tab.classList.remove('active-boost', 'active-demote', 'active-hide');
@@ -1180,28 +1185,6 @@ function initApp(mode) {
             dot.className = 'badge ' + (on ? TYPE_META[t].badge : 'badge-off');
         });
     }
-
-    // ---------- step reveal ----------
-    const TOTAL_STEPS = 2;
-    let maxRevealedStep = 1;
-
-    function revealUpTo(n) {
-        maxRevealedStep = n;
-        for (let i = 1; i <= TOTAL_STEPS; i++) {
-            $(`step-${i}`).classList.toggle('hidden', i > n);
-        }
-        $('step-continue-btn').classList.toggle('hidden', n > 1);
-        $('builder-save-btn').disabled = n < TOTAL_STEPS;
-    }
-
-    $('step-continue-btn').addEventListener('click', () => {
-        const name = $('project-name').value.trim();
-        $('project-name-error').classList.toggle('hidden', !!name);
-        if (!name) return;
-        const first = maxRevealedStep < 2;
-        revealUpTo(2);
-        if (first) $('step-2').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
 
     function validateHasRule(show) {
         const any = TYPES.some(t => editors[t].enabled);
@@ -1228,10 +1211,19 @@ function initApp(mode) {
         $('project-name-error').classList.add('hidden');
         $('no-rule-error').classList.add('hidden');
 
+        applyConfig = existing && existing.applyConfig ? { ...blankApplyConfig(), ...existing.applyConfig, terms: [...(existing.applyConfig.terms || [])] } : blankApplyConfig();
+        document.querySelectorAll(`input[name="apply-mode-${mode}"]`).forEach(r => { r.checked = r.value === applyConfig.applyMode; });
+        if (mode === 'search') $('match-mode').value = applyConfig.matchMode;
+        if (mode === 'collection') $('collection-select').value = applyConfig.collection;
+        if (mode === 'search') { $('terms-error').classList.add('hidden'); $('terms-duplicate-warning').classList.add('hidden'); }
+        if (mode === 'collection') $('collection-error').classList.add('hidden');
+        syncApplySegUI();
+        refreshApplyVisibility();
+        renderTermChips();
+
         TYPES.forEach(t => editors[t].load(existing ? (existing.rules[t] || blankRule()) : blankRule()));
         refreshTabDots();
         setActiveType('boost');
-        revealUpTo(existing ? TOTAL_STEPS : 1);
 
         listScreen.classList.add('hidden');
         builderScreen.classList.remove('hidden');
@@ -1250,9 +1242,9 @@ function initApp(mode) {
         $('project-name-error').classList.toggle('hidden', !!name);
         if (!name) valid = false;
 
+        if (!validateApplyConfig()) valid = false;
         if (!validateHasRule(true)) valid = false;
 
-        // validate each enabled rule; jump to the first broken tab
         let firstBroken = null;
         TYPES.forEach(t => {
             if (!editors[t].validate()) {
@@ -1269,6 +1261,7 @@ function initApp(mode) {
             start: $('start-date').value,
             end: $('end-date').value,
             market: $('market-select').value,
+            applyConfig: { ...applyConfig, terms: [...applyConfig.terms] },
             rules: TYPES.reduce((acc, t) => { acc[t] = editors[t].collect(); return acc; }, {}),
             _expiredApplied: false
         };
