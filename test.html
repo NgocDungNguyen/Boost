@@ -19,13 +19,6 @@
     .seg-btn { transition: all .12s ease; border-radius:6px; cursor:pointer; }
     .seg-btn.active { background:#fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 
-    /* ---- boost / demote / hide type tabs (no red — Shopify treats red as a destructive/error signal) ---- */
-    .type-tab { transition: all .12s ease; cursor:pointer; border-bottom:2px solid transparent; }
-    .type-tab:hover { color:#374151; }
-    .type-tab.active-boost  { color:#1d4ed8; border-bottom-color:#2563eb; }
-    .type-tab.active-demote { color:#a16207; border-bottom-color:#eab308; }
-    .type-tab.active-hide   { color:#c2410c; border-bottom-color:#f97316; }
-
     /* ---- toggle switch ---- */
     .toggle-track { transition: background-color .15s ease; }
     .toggle-knob { transition: transform .15s ease; }
@@ -42,6 +35,22 @@
     .badge-off    { background:#f3f4f6; color:#9ca3af; }
 
     .type-panel.hidden { display:none; }
+
+    /* ---- rule priority pills (Boost / Demote / Hide order) ---- */
+    .rule-pill { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid #e5e7eb; border-radius:9999px; padding:6px 12px 6px 8px; cursor:pointer; user-select:none; transition: border-color .12s ease, box-shadow .12s ease, background-color .12s ease; }
+    .rule-pill:hover { background:#f9fafb; }
+    .rule-pill.dragging { opacity:.4; }
+    .rule-pill.drop-target { border-color:#9ca3af; }
+    .rule-pill.active-boost  { border-color:#2563eb; box-shadow:0 0 0 1px #2563eb inset; }
+    .rule-pill.active-demote { border-color:#eab308; box-shadow:0 0 0 1px #eab308 inset; }
+    .rule-pill.active-hide   { border-color:#f97316; box-shadow:0 0 0 1px #f97316 inset; }
+    .rule-pill-handle { cursor:grab; color:#d1d5db; font-size:11px; }
+    .rule-pill-handle:active { cursor:grabbing; }
+    .rule-pill-order { width:18px; height:18px; border-radius:9999px; background:#f3f4f6; color:#6b7280; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .rule-pill.active-boost  .rule-pill-order { background:#dbeafe; color:#1d4ed8; }
+    .rule-pill.active-demote .rule-pill-order { background:#fef9c3; color:#854d0e; }
+    .rule-pill.active-hide   .rule-pill-order { background:#ffedd5; color:#9a3412; }
+    .rule-pill-name { font-size:12px; font-weight:600; color:#374151; }
 
     .chip { display:inline-flex; align-items:center; gap:6px; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:9999px; padding:3px 10px 3px 12px; font-size:11px; color:#374151; }
     .chip button { color:#9ca3af; }
@@ -225,6 +234,7 @@ const MODE_CONFIG = {
                 id: 1, name: 'Summer Sale Campaign', start: '2026-06-01', end: '2026-09-30',
                 market: 'Store default', enabled: true, _expiredApplied: false,
                 applyConfig: { applyMode:'specific', matchMode:'contains', terms:['summer','sale'], collection:'' },
+                ruleOrder: ['boost','demote','hide'],
                 rules: {
                     boost:  { ...blankRule(), enabled:true, productMode:'specific', productIds:[1,5,21] },
                     demote: { ...blankRule() },
@@ -235,6 +245,7 @@ const MODE_CONFIG = {
                 id: 2, name: 'Clearance Cleanup', start: '2026-01-01', end: '2026-03-01',
                 market: 'Store default', enabled: true, _expiredApplied: false,
                 applyConfig: { applyMode:'specific', matchMode:'is', terms:['clearance'], collection:'' },
+                ruleOrder: ['demote','hide','boost'],
                 rules: {
                     boost:  { ...blankRule() },
                     demote: { ...blankRule(), enabled:true, productMode:'specific', productIds:[2,4] },
@@ -262,6 +273,7 @@ const MODE_CONFIG = {
                 id: 1, name: 'Holiday Jewelry Push', start: '', end: '',
                 market: 'Store default', enabled: true, _expiredApplied: false,
                 applyConfig: { applyMode:'specific', matchMode:'contains', terms:[], collection:'Rings' },
+                ruleOrder: ['boost','demote','hide'],
                 rules: {
                     boost:  { ...blankRule(), enabled:true, productMode:'specific', productIds:[1,2] },
                     demote: { ...blankRule() },
@@ -273,6 +285,7 @@ const MODE_CONFIG = {
                 id: 2, name: 'Slow Mover Cleanup', start: '2026-01-01', end: '2026-02-01',
                 market: 'Store default', enabled: true, _expiredApplied: false,
                 applyConfig: { applyMode:'specific', matchMode:'contains', terms:[], collection:'Necklaces' },
+                ruleOrder: ['demote','boost','hide'],
                 rules: {
                     boost:  { ...blankRule() },
                     demote: { ...blankRule(), enabled:true, productMode:'specific', productIds:[6] },
@@ -509,15 +522,15 @@ function pageTemplate(mode) {
                         <span class="w-5 h-5 rounded-full bg-zinc-800 text-white text-[10px] font-bold flex items-center justify-center shrink-0">2</span>
                         <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Rules</span>
                     </div>
-                    <p class="text-[11px] text-gray-400 mb-4 ml-7">Set up any combination. Only the ones you turn on will apply.</p>
+                    <p class="text-[11px] text-gray-400 mb-3 ml-7">Set up any combination. Only the ones you turn on will apply, and they run in the priority order below.</p>
 
-                    <div class="flex items-center gap-1 border-b border-gray-200 mb-5">
-                        ${TYPES.map(t => `
-                            <button type="button" class="type-tab type-tab-${mode} px-4 py-2.5 text-xs font-semibold text-gray-400 flex items-center gap-2" data-type="${t}">
-                                ${TYPE_META[t].label}
-                                <span id="tab-dot-${mode}-${t}" class="badge badge-off">Off</span>
-                            </button>
-                        `).join('')}
+                    <div class="border border-gray-200 rounded-lg bg-gray-50 px-3 py-3 mb-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-semibold text-gray-600 uppercase tracking-wide">Priority order</span>
+                            <span class="text-[10px] text-gray-400"><i class="fas fa-arrows-alt-h mr-1"></i>Drag to reorder</span>
+                        </div>
+                        <div id="rule-pills-${mode}" class="flex flex-wrap items-center gap-2"></div>
+                        <p id="rule-priority-hint-${mode}" class="text-[11px] text-gray-400 mt-2.5 leading-relaxed"></p>
                     </div>
 
                     ${TYPES.map(t => typePanelTemplate(mode, t)).join('')}
@@ -1103,9 +1116,11 @@ function initApp(mode) {
 
         tbody.innerHTML = projects.map(p => {
             const expired = isExpired(p);
-            const activeTypes = TYPES.filter(t => p.rules[t] && p.rules[t].enabled);
+            const order = (Array.isArray(p.ruleOrder) && p.ruleOrder.length ? p.ruleOrder : TYPES).filter(t => TYPES.includes(t));
+            TYPES.forEach(t => { if (!order.includes(t)) order.push(t); });
+            const activeTypes = order.filter(t => p.rules[t] && p.rules[t].enabled);
             const ruleBadges = activeTypes.length
-                ? activeTypes.map(t => `<span class="badge ${TYPE_META[t].badge}">${TYPE_META[t].label}</span>`).join(' ')
+                ? activeTypes.map((t, i) => `<span class="badge ${TYPE_META[t].badge}">${i + 1} · ${TYPE_META[t].label}</span>`).join(' ')
                 : '<span class="text-[11px] text-gray-400">No rules set</span>';
             return `
             <tr draggable="true" data-id="${p.id}" class="rule-row border-b border-gray-100 last:border-0 hover:bg-gray-50">
@@ -1163,28 +1178,82 @@ function initApp(mode) {
         });
     }
 
-    // ---------- type tabs ----------
+    // ---------- rule priority pills + type panels ----------
+    // ruleOrder is the left→right priority the storefront applies rules in.
+    let ruleOrder = TYPES.slice();
+    let activeType = TYPES[0];
+    const pillsWrap = $('rule-pills');
+
+    function normalizeOrder(arr) {
+        const base = Array.isArray(arr) ? arr.filter(t => TYPES.includes(t)) : [];
+        TYPES.forEach(t => { if (!base.includes(t)) base.push(t); });
+        return base;
+    }
+
     function setActiveType(t) {
-        document.querySelectorAll('.type-tab-' + mode).forEach(tab => {
-            const on = tab.dataset.type === t;
-            tab.classList.remove('active-boost', 'active-demote', 'active-hide');
-            if (on) tab.classList.add('active-' + t);
-            tab.classList.toggle('text-gray-400', !on);
-        });
+        activeType = t;
         TYPES.forEach(x => {
             document.getElementById(`type-panel-${mode}-${x}`).classList.toggle('hidden', x !== t);
         });
+        renderRulePills();
     }
-    document.querySelectorAll('.type-tab-' + mode).forEach(tab => tab.addEventListener('click', () => setActiveType(tab.dataset.type)));
 
-    function refreshTabDots() {
-        TYPES.forEach(t => {
-            const dot = document.getElementById(`tab-dot-${mode}-${t}`);
+    function renderPriorityHint() {
+        const seq = ruleOrder
+            .map((t, i) => `<span class="font-semibold text-gray-600">${i + 1} ${TYPE_META[t].label}</span>`)
+            .join(' <span class="text-gray-300">→</span> ');
+        $('rule-priority-hint').innerHTML =
+            `<i class="fas fa-list-ol mr-1 text-gray-400"></i>When the storefront runs this project it applies rules left to right: ${seq}.`;
+    }
+
+    function renderRulePills() {
+        pillsWrap.innerHTML = ruleOrder.map((t, i) => {
             const on = editors[t].enabled;
-            dot.textContent = on ? 'On' : 'Off';
-            dot.className = 'badge ' + (on ? TYPE_META[t].badge : 'badge-off');
+            return `
+            <div class="rule-pill ${t === activeType ? 'active-' + t : ''}" draggable="true" data-type="${t}">
+                <span class="rule-pill-handle"><i class="fas fa-grip-vertical"></i></span>
+                <span class="rule-pill-order">${i + 1}</span>
+                <span class="rule-pill-name">${TYPE_META[t].label}</span>
+                <span class="rule-pill-status badge ${on ? TYPE_META[t].badge : 'badge-off'}">${on ? 'On' : 'Off'}</span>
+            </div>`;
+        }).join('');
+
+        pillsWrap.querySelectorAll('.rule-pill').forEach(pill => {
+            pill.addEventListener('click', () => setActiveType(pill.dataset.type));
+        });
+        bindPillDragReorder();
+        renderPriorityHint();
+    }
+
+    function bindPillDragReorder() {
+        let dragEl = null;
+        pillsWrap.querySelectorAll('.rule-pill').forEach(pill => {
+            pill.addEventListener('dragstart', e => {
+                dragEl = pill;
+                pill.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            pill.addEventListener('dragend', () => {
+                pill.classList.remove('dragging');
+                pillsWrap.querySelectorAll('.rule-pill').forEach(p => p.classList.remove('drop-target'));
+            });
+            pill.addEventListener('dragover', e => {
+                e.preventDefault();
+                if (!dragEl || dragEl === pill) return;
+                const rect = pill.getBoundingClientRect();
+                const after = (e.clientX - rect.left) > rect.width / 2;
+                pillsWrap.insertBefore(dragEl, after ? pill.nextSibling : pill);
+            });
+            pill.addEventListener('drop', e => {
+                e.preventDefault();
+                ruleOrder = [...pillsWrap.querySelectorAll('.rule-pill')].map(p => p.dataset.type);
+                renderRulePills();
+            });
         });
     }
+
+    // kept name for existing callers — now redraws the priority pills
+    function refreshTabDots() { renderRulePills(); }
 
     function validateHasRule(show) {
         const any = TYPES.some(t => editors[t].enabled);
@@ -1221,8 +1290,8 @@ function initApp(mode) {
         refreshApplyVisibility();
         renderTermChips();
 
+        ruleOrder = normalizeOrder(existing ? existing.ruleOrder : null);
         TYPES.forEach(t => editors[t].load(existing ? (existing.rules[t] || blankRule()) : blankRule()));
-        refreshTabDots();
         setActiveType('boost');
 
         listScreen.classList.add('hidden');
@@ -1262,6 +1331,7 @@ function initApp(mode) {
             end: $('end-date').value,
             market: $('market-select').value,
             applyConfig: { ...applyConfig, terms: [...applyConfig.terms] },
+            ruleOrder: [...ruleOrder],
             rules: TYPES.reduce((acc, t) => { acc[t] = editors[t].collect(); return acc; }, {}),
             _expiredApplied: false
         };
